@@ -7,7 +7,7 @@ spec:
   chart:
     git: https://github.com/hashgraph/hedera-mirror-node.git
     path: charts/hedera-mirror
-    ref: 5e8be16d6a0136116803612116ea5498b4750889
+    ref: e7fb25d9b451ad4eb287aafeb046977fc480b66c
   rollback:
     enable: true
     force: true
@@ -16,10 +16,6 @@ spec:
   timeout: 500
   wait: false
   values:
-    grpc:
-      prometheusRules:
-        GrpcNoSubscribers:
-          enabled: false
     importer:
       config:
         hedera:
@@ -29,7 +25,6 @@ spec:
                 cloudProvider: S3
               initialAddressBook: "/usr/etc/addressbook/addressbook.bin"
               network: OTHER
-              startDate: 1970-01-01T00:00:00Z
       extraVolumeMounts:
         - name: addressbook
           mountPath: /usr/etc/addressbook
@@ -38,23 +33,12 @@ spec:
           secret:
             defaultMode: 420
             secretName: mirror-importer-addressbook
-      replicas: 0
     monitor:
       config:
         hedera:
           mirror:
             monitor:
-              mirrorNode:
-                grpc:
-                  host: integration-mirror-grpc
-                rest:
-                  host: integration-mirror-rest
-                  port: 80
               network: OTHER
-    rest:
-      prometheusRules:
-        RestNoRequests:
-          enabled: false
   valuesFrom:
     - chartFileRef:
         path: values-prod.yaml
