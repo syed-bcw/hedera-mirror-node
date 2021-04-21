@@ -34,16 +34,6 @@ spec:
       image:
         tag: master-6d479bd426122acce2268e5233b0683da0e7e78a
     monitor:
-      config:
-        hedera:
-          mirror:
-            monitor:
-              mirrorNode:
-                grpc:
-                  host: dev-mirror-grpc
-                rest:
-                  host: dev-mirror-rest
-                  port: 80
       image:
         tag: master-6d479bd426122acce2268e5233b0683da0e7e78a
     postgresql:
@@ -54,6 +44,8 @@ spec:
       prometheusRules:
         RestNoRequests:
           enabled: false
+    timescaledb:
+      enabled: false
   valuesFrom:
     - chartFileRef:
         path: values-prod.yaml
