@@ -123,6 +123,8 @@ class SqlEntityListenerTest extends IntegrationTest {
     private static Key keyFromString(String key) {
         return Key.newBuilder().setEd25519(ByteString.copyFromUtf8(key)).build();
     }
+    private final String fileName = "2019-08-30T18_10_00.419072Z.rcd";
+    private RecordFile recordFile;
 
     @BeforeEach
     final void beforeEach() {
