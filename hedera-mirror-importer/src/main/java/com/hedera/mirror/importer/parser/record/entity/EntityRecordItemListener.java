@@ -722,6 +722,7 @@ public class EntityRecordItemListener implements RecordItemListener {
 
                     NftTransfer nftTransferDomain = new NftTransfer();
                     nftTransferDomain.setId(new NftTransferId(consensusTimestamp, serialNumber, tokenId));
+                    // explicitly set nullable AccountIds to null to prevent conversion to 0 on serialization
                     nftTransferDomain.setReceiverAccountId(EntityId.isEmpty(receiverId) ? null : receiverId);
                     nftTransferDomain.setSenderAccountId(EntityId.isEmpty(senderId) ? null : senderId);
                     nftTransferDomain.setTransactionPayerAccountId(transactionPayerAccount);
