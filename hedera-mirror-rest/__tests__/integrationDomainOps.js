@@ -235,16 +235,17 @@ const addAssessedCustomFee = async (assessedCustomFee) => {
     effective_payer_account_ids: [],
     ...assessedCustomFee,
   };
-  const {amount, collector_account_id, consensus_timestamp, effective_payer_account_ids, token_id} = assessedCustomFee;
+  const {amount, collector_account_id, consensus_timestamp, effective_payer_account_ids, payer_account_id, token_id} =
+    assessedCustomFee;
   const effectivePayerAccountIds = [
     '{',
     effective_payer_account_ids.map((payer) => EntityId.fromString(payer).getEncodedId()).join(','),
     '}',
   ].join('');
 
-  const {amount, collector_account_id, consensus_timestamp, token_id, payer_account_id} = assessedCustomFee;
   await sqlConnection.query(
-    `insert into assessed_custom_fee (amount, collector_account_id, consensus_timestamp, effective_payer_account_ids, token_id, transaction_payer_account_id)
+    `insert into assessed_custom_fee (amount, collector_account_id, consensus_timestamp, effective_payer_account_ids,
+                                      token_id, transaction_payer_account_id)
      values ($1, $2, $3, $4, $5, $6);`,
     [
       amount,
