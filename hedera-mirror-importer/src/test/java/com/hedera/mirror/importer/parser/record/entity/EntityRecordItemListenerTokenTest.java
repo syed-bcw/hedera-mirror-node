@@ -1700,6 +1700,8 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
         assessedCustomFee3.setAmount(12300L);
         assessedCustomFee3.setEffectivePayerEntityIds(List.of(FEE_PAYER_1));
         assessedCustomFee3.setId(new AssessedCustomFee.Id(FEE_COLLECTOR_ACCOUNT_ID_1, TRANSFER_TIMESTAMP));
+        assessedCustomFee3.setTokenId(EntityId.EMPTY);
+        assessedCustomFee3.setTransactionPayerAccountId(EntityId.of(PAYER));
 
         // paid in FEE_DOMAIN_TOKEN_ID, two effective payers
         AssessedCustomFee assessedCustomFee4 = new AssessedCustomFee();
@@ -1707,6 +1709,7 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
         assessedCustomFee4.setId(new AssessedCustomFee.Id(FEE_COLLECTOR_ACCOUNT_ID_2, TRANSFER_TIMESTAMP));
         assessedCustomFee4.setEffectivePayerEntityIds(List.of(FEE_PAYER_1, FEE_PAYER_2));
         assessedCustomFee4.setTokenId(FEE_DOMAIN_TOKEN_ID);
+        assessedCustomFee4.setTransactionPayerAccountId(EntityId.of(PAYER));
         List<AssessedCustomFee> assessedCustomFeesWithPayers = List.of(assessedCustomFee3, assessedCustomFee4);
 
         // build the corresponding protobuf assessed custom fee list, with effective payer account ids

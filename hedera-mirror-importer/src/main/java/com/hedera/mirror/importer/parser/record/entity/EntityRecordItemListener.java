@@ -115,9 +115,10 @@ public class EntityRecordItemListener implements RecordItemListener {
     private final FileDataRepository fileDataRepository;
 
     public EntityRecordItemListener(CommonParserProperties commonParserProperties, EntityProperties entityProperties,
-            AddressBookService addressBookService, NonFeeTransferExtractionStrategy nonFeeTransfersExtractor,
-            EntityListener entityListener, TransactionHandlerFactory transactionHandlerFactory,
-            FileDataRepository fileDataRepository) {
+                                    AddressBookService addressBookService,
+                                    NonFeeTransferExtractionStrategy nonFeeTransfersExtractor,
+                                    EntityListener entityListener, TransactionHandlerFactory transactionHandlerFactory,
+                                    FileDataRepository fileDataRepository) {
         this.entityProperties = entityProperties;
         this.addressBookService = addressBookService;
         this.nonFeeTransfersExtractor = nonFeeTransfersExtractor;
@@ -301,13 +302,12 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     /**
-     * Additionally store rows in the non_fee_transactions table if applicable. This
-     * will allow the rest-api to create an itemized set of transfers that reflects
-     * non-fees (explicit transfers), threshold records, node fee, and
+     * Additionally store rows in the non_fee_transactions table if applicable. This will allow the rest-api to create
+     * an itemized set of transfers that reflects non-fees (explicit transfers), threshold records, node fee, and
      * network+service fee (paid to treasury).
      */
     private void processNonFeeTransfers(long consensusTimestamp, TransactionBody body,
-            TransactionRecord transactionRecord) {
+                                        TransactionRecord transactionRecord) {
         if (!entityProperties.getPersist().isNonFeeTransfers()) {
             return;
         }
@@ -322,7 +322,7 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private void insertConsensusTopicMessage(ConsensusSubmitMessageTransactionBody transactionBody,
-            TransactionRecord transactionRecord) {
+                                             TransactionRecord transactionRecord) {
         var receipt = transactionRecord.getReceipt();
         var topicId = transactionBody.getTopicID();
         int runningHashVersion = receipt.getTopicRunningHashVersion() == 0 ? 1
@@ -389,7 +389,7 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private void insertContractCall(long consensusTimestamp, ContractCallTransactionBody transactionBody,
-            TransactionRecord transactionRecord) {
+                                    TransactionRecord transactionRecord) {
         if (entityProperties.getPersist().isContracts() && transactionRecord.hasContractCallResult()) {
             byte[] functionParams = Utility.toBytes(transactionBody.getFunctionParameters());
             long gasSupplied = transactionBody.getGas();
@@ -400,7 +400,7 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private void insertContractCreateInstance(long consensusTimestamp, ContractCreateTransactionBody transactionBody,
-            TransactionRecord transactionRecord) {
+                                              TransactionRecord transactionRecord) {
         if (entityProperties.getPersist().isContracts() && transactionRecord.hasContractCreateResult()) {
             byte[] functionParams = Utility.toBytes(transactionBody.getConstructorParameters());
             long gasSupplied = transactionBody.getGas();
@@ -414,14 +414,14 @@ public class EntityRecordItemListener implements RecordItemListener {
         for (int i = 0; i < transferList.getAccountAmountsCount(); ++i) {
             var aa = transferList.getAccountAmounts(i);
             var account = EntityId.of(aa.getAccountID());
-            entityListener.onEntity(account);
+            entityListener.onEntityId(account);
             entityListener
                     .onCryptoTransfer(new CryptoTransfer(consensusTimestamp, aa.getAmount(), account, payerAccountId));
         }
     }
 
     private void insertCryptoCreateTransferList(long consensusTimestamp, TransactionRecord txRecord,
-            TransactionBody body) {
+                                                TransactionBody body) {
 
         long initialBalance = body.getCryptoCreateAccount().getInitialBalance();
         EntityId createdAccount = EntityId.of(txRecord.getReceipt().getAccountID());
@@ -432,7 +432,7 @@ public class EntityRecordItemListener implements RecordItemListener {
         for (int i = 0; i < transferList.getAccountAmountsCount(); ++i) {
             var aa = transferList.getAccountAmounts(i);
             var account = EntityId.of(aa.getAccountID());
-            entityListener.onEntity(account);
+            entityListener.onEntityId(account);
             entityListener.onCryptoTransfer(
                     new CryptoTransfer(consensusTimestamp, aa.getAmount(), account, transactionPayerAccountId));
 
@@ -445,8 +445,8 @@ public class EntityRecordItemListener implements RecordItemListener {
 
         if (addInitialBalance) {
             var payerAccount = EntityId.of(body.getTransactionID().getAccountID());
-            entityListener.onEntity(payerAccount);
-            entityListener.onEntity(createdAccount);
+            entityListener.onEntityId(payerAccount);
+            entityListener.onEntityId(createdAccount);
             entityListener.onCryptoTransfer(
                     new CryptoTransfer(consensusTimestamp, -initialBalance, payerAccount, transactionPayerAccountId));
             entityListener.onCryptoTransfer(
@@ -455,18 +455,17 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private void insertContractResults(long consensusTimestamp, byte[] functionParams, long gasSupplied,
-            byte[] callResult, long gasUsed) {
+                                       byte[] callResult, long gasUsed) {
         entityListener.onContractResult(
                 new ContractResult(consensusTimestamp, functionParams, gasSupplied, callResult, gasUsed));
     }
 
     /**
      * @param entityId entity to be updated. Should not be null.
-     * @return entity associated with the transaction. Entity is guaranteed to be
-     *         persisted in repo.
+     * @return entity associated with the transaction. Entity is guaranteed to be persisted in repo.
      */
     private void insertEntityCreateOrUpdate(RecordItem recordItem, TransactionHandler transactionHandler,
-            EntityId entityId) {
+                                            EntityId entityId) {
         Entity entity = entityId.toEntity();
         transactionHandler.updateEntity(entity, recordItem);
         entityListener.onEntityId(entity.getAutoRenewAccountId());
@@ -579,14 +578,15 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private TokenAccount getAssociatedTokenAccount(EntityId accountId, boolean autoAssociation, long consensusTimestamp,
-            EntityId tokenId) {
+                                                   EntityId tokenId) {
         // if null, freeze and kyc status will be set during db upsert flow
         return getAssociatedTokenAccount(accountId, autoAssociation, consensusTimestamp, null, null, tokenId);
     }
 
     private TokenAccount getAssociatedTokenAccount(EntityId accountId, boolean automaticAssociation,
-            long consensusTimestamp, TokenFreezeStatusEnum freezeStatus, TokenKycStatusEnum kycStatus,
-            EntityId tokenId) {
+                                                   long consensusTimestamp, TokenFreezeStatusEnum freezeStatus,
+                                                   TokenKycStatusEnum kycStatus,
+                                                   EntityId tokenId) {
         TokenAccount tokenAccount = new TokenAccount(tokenId, accountId, consensusTimestamp);
         tokenAccount.setAssociated(true);
         tokenAccount.setAutomaticAssociation(automaticAssociation);
@@ -760,7 +760,7 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private void transferNftOwnership(long modifiedTimeStamp, long serialNumber, EntityId tokenId,
-            EntityId receiverId) {
+                                      EntityId receiverId) {
         Nft nft = new Nft(serialNumber, tokenId);
         nft.setAccountId(receiverId);
         nft.setModifiedTimestamp(modifiedTimeStamp);
@@ -922,7 +922,7 @@ public class EntityRecordItemListener implements RecordItemListener {
     }
 
     private void insertTransactionSignatures(EntityId entityId, long consensusTimestamp,
-            List<SignaturePair> signaturePairList) {
+                                             List<SignaturePair> signaturePairList) {
         HashSet<ByteString> publicKeyPrefixes = new HashSet<>();
         signaturePairList.forEach(signaturePair -> {
             // currently only Ed25519 signature is supported
@@ -980,6 +980,7 @@ public class EntityRecordItemListener implements RecordItemListener {
 
                 EntityId tokenId = EntityId.of(protoAssessedCustomFee.getTokenId());
                 assessedCustomFee.setTokenId(tokenId == null ? EntityId.EMPTY : tokenId);
+
                 assessedCustomFee.setTransactionPayerAccountId(transactionPayerAccount);
                 entityListener.onAssessedCustomFee(assessedCustomFee);
             }
@@ -997,7 +998,7 @@ public class EntityRecordItemListener implements RecordItemListener {
      * @return A list of collectors automatically associated with the token if it's a token create transaction
      */
     private Set<EntityId> insertCustomFees(List<com.hederahashgraph.api.proto.java.CustomFee> customFeeList,
-            long consensusTimestamp, boolean isTokenCreate, EntityId tokenId) {
+                                           long consensusTimestamp, boolean isTokenCreate, EntityId tokenId) {
         Set<EntityId> autoAssociatedAccounts = new HashSet<>();
         CustomFee.Id id = new CustomFee.Id(consensusTimestamp, tokenId);
 
