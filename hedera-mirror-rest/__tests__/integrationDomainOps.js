@@ -387,6 +387,7 @@ const addTransaction = async (transaction) => {
     'non_fee_transfer',
     transaction.consensus_timestamp,
     transaction.non_fee_transfers,
+    false,
     payerAccount
   );
   await insertTokenTransfers(transaction.consensus_timestamp, transaction.token_transfer_list, payerAccount);
@@ -406,7 +407,7 @@ const insertTransfers = async (
     await sqlConnection.query(
       `INSERT INTO ${tableName} (consensus_timestamp, amount, entity_id, transaction_payer_account_id)
        VALUES ($1, $2, $3, $4);`,
-      [consensusTimestamp.toString(), NODE_FEE, nodeAccount || DEFAULT_NODE_ID, payerAccountId]
+      [consensusTimestamp.toString(), NODE_FEE, nodeAccount === '0' ? DEFAULT_NODE_ID : nodeAccount, payerAccountId]
     );
     await sqlConnection.query(
       `INSERT INTO ${tableName} (consensus_timestamp, amount, entity_id, transaction_payer_account_id)

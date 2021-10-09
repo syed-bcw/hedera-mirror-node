@@ -83,7 +83,7 @@ const getSelectClauseWithTransfers = (includeExtraInfo, innerQuery) => {
         'sender_account_id', ${NftTransfer.SENDER_ACCOUNT_ID},
         'serial_number', ${NftTransfer.SERIAL_NUMBER},
         'token_id', ${NftTransfer.TOKEN_ID}
-      ) order by ${NftTransfer.TOKEN_ID_FULL_NAME} desc, ${NftTransfer.SERIAL_NUMBER_FULL_NAME}
+      ) order by ${NftTransfer.TOKEN_ID_FULL_NAME}, ${NftTransfer.SERIAL_NUMBER_FULL_NAME}
     ) as ntr_list,
     ${NftTransfer.CONSENSUS_TIMESTAMP_FULL_NAME},
     tlist.payer_account_id
@@ -96,6 +96,7 @@ const getSelectClauseWithTransfers = (includeExtraInfo, innerQuery) => {
   select jsonb_agg(jsonb_build_object(
         'amount', ${AssessedCustomFee.AMOUNT},
         'collector_account_id', ${AssessedCustomFee.COLLECTOR_ACCOUNT_ID},
+        'effective_payer_account_ids', ${AssessedCustomFee.EFFECTIVE_PAYER_ACCOUNT_IDS},
         'payer_account_id', ${AssessedCustomFee.COLLECTOR_ACCOUNT_ID},
         'token_id', ${AssessedCustomFee.TOKEN_ID}
       ) order by ${AssessedCustomFee.COLLECTOR_ACCOUNT_ID}, ${AssessedCustomFee.AMOUNT}
@@ -109,20 +110,21 @@ const getSelectClauseWithTransfers = (includeExtraInfo, innerQuery) => {
 
   const transfersListCte = (includeExtraInfo) => {
     return `transfer_list as (
-    select coalesce(ctrl.consensus_timestamp, ttrl.consensus_timestamp${
+    select coalesce(t.consensus_timestamp, ctrl.consensus_timestamp, ttrl.consensus_timestamp${
       includeExtraInfo ? ', ntrl.consensus_timestamp, ftrl.consensus_timestamp' : ''
     }) AS consensus_timestamp,
       ctrl.ctr_list,
       ttrl.ttr_list
       ${includeExtraInfo ? ', ntrl.ntr_list' : ''}
       ${includeExtraInfo ? ', ftrl.ftr_list' : ''}
-      , coalesce(ctrl.payer_account_id, ttrl.payer_account_id${
+      , coalesce(t.payer_account_id, ctrl.payer_account_id, ttrl.payer_account_id${
         includeExtraInfo ? ', ntrl.payer_account_id, ftrl.payer_account_id' : ''
       }) AS payer_account_id
-    from c_list ctrl
-    full outer join t_list ttrl on ctrl.consensus_timestamp = ttrl.consensus_timestamp
-    ${includeExtraInfo ? 'full outer join nft_list ntrl on ctrl.consensus_timestamp = ntrl.consensus_timestamp' : ''}
-    ${includeExtraInfo ? 'full outer join fee_list ftrl on ctrl.consensus_timestamp = ftrl.consensus_timestamp' : ''}
+    from tlist t
+    full outer join c_list ctrl on t.consensus_timestamp = ctrl.consensus_timestamp
+    full outer join t_list ttrl on t.consensus_timestamp = ttrl.consensus_timestamp
+    ${includeExtraInfo ? 'full outer join nft_list ntrl on t.consensus_timestamp = ntrl.consensus_timestamp' : ''}
+    ${includeExtraInfo ? 'full outer join fee_list ftrl on t.consensus_timestamp = ftrl.consensus_timestamp' : ''}
   )`;
   };
   const ctes = [transactionTimeStampCte(innerQuery), cryptoTransferListCte, tokenTransferListCte];
@@ -365,12 +367,10 @@ const getTransferDistinctTimestampsQuery = function (
   );
 
   return `
-    SELECT DISTINCT ${tableAlias}.${timestampColumn} AS consensus_timestamp, transaction_payer_account_id as payer_account_id
-    FROM ${tableName} AS ${tableAlias}
-    ${joinClause}
-    ${whereClause}
-    ORDER BY ${tableAlias}.consensus_timestamp ${order}
-    ${namedLimitQuery}`;
+    SELECT DISTINCT ${tableAlias}.${timestampColumn} AS consensus_timestamp,
+                    transaction_payer_account_id     as payer_account_id
+    FROM ${tableName} AS ${tableAlias} ${joinClause} ${whereClause}
+    ORDER BY ${tableAlias}.consensus_timestamp ${order} ${namedLimitQuery}`;
 };
 
 /**
@@ -416,9 +416,8 @@ const getTransactionsInnerQuery = function (
   const transactionOnlyQuery = `
     SELECT consensus_ns AS consensus_timestamp, payer_account_id, valid_start_ns
     FROM transaction AS t
-    ${transactionWhereClause}
-    ORDER BY consensus_timestamp ${order}
-    ${_.isNil(creditDebitQuery) ? '' : namedLimitQuery}`;
+      ${transactionWhereClause}
+    ORDER BY consensus_timestamp ${order} ${_.isNil(creditDebitQuery) ? '' : namedLimitQuery}`;
 
   if (creditDebitQuery || namedAccountQuery) {
     const ctlQuery = getTransferDistinctTimestampsQuery(
@@ -453,29 +452,30 @@ const getTransactionsInnerQuery = function (
       // credit/debit filter applies to crypto_transfer.amount and token_transfer.amount, a full outer join is needed to get
       // transactions that only have a crypto_transfer or a token_transfer
       return `
-        SELECT 
-          COALESCE(ctl.consensus_timestamp, ttl.consensus_timestamp) AS consensus_timestamp,
-          coalesce(ctl.payer_account_id, ttl.payer_account_id) AS payer_account_id
+        SELECT COALESCE(ctl.consensus_timestamp, ttl.consensus_timestamp) AS consensus_timestamp,
+               coalesce(ctl.payer_account_id, ttl.payer_account_id)       AS payer_account_id
         FROM (${ctlQuery}) AS ctl
-        FULL OUTER JOIN (${ttlQuery}) as ttl
-        ON ctl.payer_account_id = ttl.payer_account_id and ctl.consensus_timestamp = ttl.consensus_timestamp
+               FULL OUTER JOIN (${ttlQuery}) as ttl
+                               ON ctl.payer_account_id = ttl.payer_account_id and
+                                  ctl.consensus_timestamp = ttl.consensus_timestamp
         ORDER BY consensus_timestamp ${order}
-        ${namedLimitQuery}`;
+          ${namedLimitQuery}`;
     }
 
     // account filter applies to transaction.payer_account_id, crypto_transfer.entity_id, nft_transfer.account_id,
     // and token_transfer.account_id, a full outer join between the four tables is needed to get rows that may only exist in one.
     return `
-      SELECT 
-        coalesce(t.consensus_timestamp, ctl.consensus_timestamp, ttl.consensus_timestamp) AS consensus_timestamp, 
-        coalesce(t.payer_account_id, ctl.payer_account_id, ttl.payer_account_id) AS payer_account_id
+      SELECT coalesce(t.consensus_timestamp, ctl.consensus_timestamp, ttl.consensus_timestamp) AS consensus_timestamp,
+             coalesce(t.payer_account_id, ctl.payer_account_id, ttl.payer_account_id)          AS payer_account_id
       FROM (${transactionOnlyQuery}) AS t
-      FULL OUTER JOIN (${ctlQuery}) AS ctl
-      ON t.payer_account_id = ctl.payer_account_id and t.consensus_timestamp = ctl.consensus_timestamp
-      FULL OUTER JOIN (${ttlQuery}) AS ttl
-      ON ctl.payer_account_id = ttl.payer_account_id and coalesce(t.consensus_timestamp, ctl.consensus_timestamp) = ttl.consensus_timestamp
+             FULL OUTER JOIN (${ctlQuery}) AS ctl
+                             ON t.payer_account_id = ctl.payer_account_id and
+                                t.consensus_timestamp = ctl.consensus_timestamp
+             FULL OUTER JOIN (${ttlQuery}) AS ttl
+                             ON ctl.payer_account_id = ttl.payer_account_id and
+                                coalesce(t.consensus_timestamp, ctl.consensus_timestamp) = ttl.consensus_timestamp
       ORDER BY consensus_timestamp ${order}
-      ${namedLimitQuery}`;
+        ${namedLimitQuery}`;
   }
 
   return transactionOnlyQuery;
@@ -593,10 +593,10 @@ const getOneTransaction = async (req, res) => {
   const includeExtraInfo = true;
 
   const innerQuery = `SELECT consensus_ns AS consensus_timestamp, payer_account_id, valid_start_ns
-                FROM transaction AS t
-                ${whereClause}
-                ORDER BY consensus_timestamp desc
-                limit $3`;
+                      FROM transaction AS t
+                        ${whereClause}
+                      ORDER BY consensus_timestamp desc
+                      limit $3`;
 
   const sqlQuery = `
     ${getSelectClauseWithTransfers(includeExtraInfo, innerQuery)}
