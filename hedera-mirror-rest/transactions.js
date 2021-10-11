@@ -39,15 +39,19 @@ const {AssessedCustomFeeViewModel, NftTransferViewModel} = require('./viewmodel'
  */
 const getSelectClauseWithTransfers = (includeExtraInfo, innerQuery) => {
   const transactionTimeStampCte = (modifyingQuery) => {
-    let tquery = modifyingQuery;
-
-    if (_.isNil(modifyingQuery)) {
-      tquery = `SELECT consensus_ns AS consensus_timestamp, payer_account_id, valid_start_ns
-                FROM transaction AS t
-                ORDER BY consensus_timestamp desc
-                limit $1`;
+    let timestampFilter = '';
+    if (modifyingQuery) {
+      timestampFilter = `timestampFilter as (${modifyingQuery}),`;
     }
-    return `tlist as (${tquery})`;
+
+    const tquery = `SELECT t.consensus_ns AS consensus_timestamp, t.payer_account_id, t.valid_start_ns
+                    FROM transaction AS t
+                      ${modifyingQuery ? 'join timestampFilter tf on t. consensus_ns = tf.consensus_timestamp' : ''}
+                    ORDER BY consensus_timestamp desc
+                    limit $1`;
+
+    return `${timestampFilter}
+      tlist as (${tquery})`;
   };
 
   const cryptoTransferListCte = `c_list as (
