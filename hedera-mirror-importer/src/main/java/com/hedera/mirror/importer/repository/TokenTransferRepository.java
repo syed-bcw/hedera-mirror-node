@@ -37,12 +37,14 @@ public interface TokenTransferRepository extends CrudRepository<TokenTransfer, T
             "  returning serial_number), " +
             "transferred_nft as (" +
             "  insert into nft_transfer" +
-            "    (token_id, sender_account_id, consensus_timestamp, serial_number)" +
-            "  select ?4, ?1, ?3, dissociated_nft.serial_number " +
+            "    (token_id, sender_account_id, consensus_timestamp, serial_number, transaction_payer_account_id)" +
+            "  select ?4, ?1, ?3, dissociated_nft.serial_number, ?5 " +
             "  from dissociated_nft" +
             "  returning serial_number) " +
-            "insert into token_transfer (account_id, amount, consensus_timestamp, token_id) " +
-            "select ?1, ?2, ?3, ?4 " +
+            "insert into token_transfer (account_id, amount, consensus_timestamp, token_id, " +
+            "transaction_payer_account_id) " +
+            "select ?1, ?2, ?3, ?4, ?5 " +
             "where not exists (select * from transferred_nft)", nativeQuery = true)
-    void insertTransferForTokenDissociate(long accountId, long amount, long consensusTimestamp, long tokenId);
+    void insertTransferForTokenDissociate(long accountId, long amount, long consensusTimestamp, long tokenId,
+                                          long payerId);
 }

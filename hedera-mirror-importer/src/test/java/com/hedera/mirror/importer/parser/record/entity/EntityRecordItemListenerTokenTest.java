@@ -277,7 +277,8 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
 
         // then
         assertTokenInRepository(TOKEN_ID, true, CREATE_TIMESTAMP, dissociateTimeStamp, SYMBOL, INITIAL_SUPPLY - 10);
-        var expected = new TokenTransfer(dissociateTimeStamp, -10, EntityId.of(TOKEN_ID), EntityId.of(PAYER2));
+        var expected = new TokenTransfer(dissociateTimeStamp, -10, EntityId.of(TOKEN_ID),
+                EntityId.of(PAYER2), false, EntityId.of(PAYER));
         assertThat(tokenTransferRepository.findById(expected.getId())).get().isEqualTo(expected);
     }
 
@@ -323,10 +324,10 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
         assertNftInRepository(TOKEN_ID, 2L, true, mintTimestamp, mintTimestamp, PAYER, false);
         assertTokenInRepository(TOKEN_ID, true, CREATE_TIMESTAMP, dissociateTimeStamp, SYMBOL, 1);
         assertThat(nftTransferRepository.findAll()).containsExactlyInAnyOrder(
-                domainNftTransfer(mintTimestamp, PAYER, DEFAULT_ACCOUNT_ID, 1L, TOKEN_ID),
-                domainNftTransfer(mintTimestamp, PAYER, DEFAULT_ACCOUNT_ID, 2L, TOKEN_ID),
-                domainNftTransfer(transferTimestamp, PAYER2, PAYER, 1L, TOKEN_ID),
-                domainNftTransfer(dissociateTimeStamp, DEFAULT_ACCOUNT_ID, PAYER2, 1L, TOKEN_ID)
+                domainNftTransfer(mintTimestamp, PAYER, DEFAULT_ACCOUNT_ID, 1L, TOKEN_ID, PAYER),
+                domainNftTransfer(mintTimestamp, PAYER, DEFAULT_ACCOUNT_ID, 2L, TOKEN_ID, PAYER),
+                domainNftTransfer(transferTimestamp, PAYER2, PAYER, 1L, TOKEN_ID, PAYER),
+                domainNftTransfer(dissociateTimeStamp, DEFAULT_ACCOUNT_ID, PAYER2, 1L, TOKEN_ID, PAYER)
         );
         assertThat(tokenTransferRepository.findAll()).isEmpty();
     }
@@ -477,8 +478,8 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
 
         // then
         assertThat(nftTransferRepository.findAll()).containsExactlyInAnyOrder(
-                domainNftTransfer(mintTimestamp, PAYER, DEFAULT_ACCOUNT_ID, 1L, TOKEN_ID),
-                domainNftTransfer(updateTimestamp, PAYER2, PAYER, 1L, TOKEN_ID)
+                domainNftTransfer(mintTimestamp, PAYER, DEFAULT_ACCOUNT_ID, 1L, TOKEN_ID, PAYER),
+                domainNftTransfer(updateTimestamp, PAYER2, PAYER, 1L, TOKEN_ID, PAYER)
         );
     }
 
@@ -1110,7 +1111,7 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
 
     private com.hedera.mirror.importer.domain.NftTransfer domainNftTransfer(long consensusTimestamp, AccountID receiver,
                                                                             AccountID sender, long serialNumber,
-                                                                            TokenID token) {
+                                                                            TokenID token, AccountID payer) {
         var nftTransfer = new com.hedera.mirror.importer.domain.NftTransfer();
         nftTransfer.setId(new NftTransferId(consensusTimestamp, serialNumber, EntityId.of(token)));
         if (!receiver.equals(DEFAULT_ACCOUNT_ID)) {
@@ -1119,6 +1120,7 @@ class EntityRecordItemListenerTokenTest extends AbstractEntityRecordItemListener
         if (!sender.equals(DEFAULT_ACCOUNT_ID)) {
             nftTransfer.setSenderAccountId(EntityId.of(sender));
         }
+        nftTransfer.setTransactionPayerAccountId(EntityId.of(payer));
         return nftTransfer;
     }
 

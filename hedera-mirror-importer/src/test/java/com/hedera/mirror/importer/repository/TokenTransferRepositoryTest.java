@@ -59,7 +59,7 @@ class TokenTransferRepositoryTest extends AbstractRepositoryTest {
         EntityId accountId = EntityId.of(0L, 1L, 7L, ACCOUNT);
         EntityId payerAccountId = EntityId.of(0L, 1L, 500L, ACCOUNT);
         long amount = 40L;
-        TokenTransfer tokenTransfer = new TokenTransfer(1L, amount, tokenId, accountId, payerAccountId);
+        TokenTransfer tokenTransfer = new TokenTransfer(1L, amount, tokenId, accountId, false, payerAccountId);
 
         tokenTransferRepository.save(tokenTransfer);
 
@@ -83,7 +83,8 @@ class TokenTransferRepositoryTest extends AbstractRepositoryTest {
 
         // when
         // there is a tokenTransferList in the transaction record of a token dissociate transaction
-        tokenTransferRepository.insertTransferForTokenDissociate(accountId.getId(), -2, 20L, tokenId.getId());
+        tokenTransferRepository.insertTransferForTokenDissociate(accountId.getId(), -2, 20L, tokenId.getId(),
+                100);
 
         // then
         assertThat(nftRepository.findAll()).containsExactlyInAnyOrder(
@@ -91,8 +92,8 @@ class TokenTransferRepositoryTest extends AbstractRepositoryTest {
                 nft(tokenId, accountId, 2, 16L, 20L, true)
         );
         assertThat(nftTransferRepository.findAll()).containsExactlyInAnyOrder(
-                nftTransfer(tokenId, accountId, 1L, 20L),
-                nftTransfer(tokenId, accountId, 2L, 20L)
+                nftTransfer(tokenId, accountId, 1L, 20L, EntityId.of("0.0.100", EntityTypeEnum.ACCOUNT)),
+                nftTransfer(tokenId, accountId, 2L, 20L, EntityId.of("0.0.100", EntityTypeEnum.ACCOUNT))
         );
         assertThat(tokenTransferRepository.findAll()).isEmpty();
     }
@@ -105,11 +106,13 @@ class TokenTransferRepositoryTest extends AbstractRepositoryTest {
         long amount = -2;
         long consensusTimestamp = 20;
         EntityId tokenId = EntityId.of("0.0.100", EntityTypeEnum.TOKEN);
-        TokenTransfer expected = new TokenTransfer(consensusTimestamp, amount, tokenId, accountId);
+        EntityId transactionPayerId = EntityId.of("0.0.50", EntityTypeEnum.ACCOUNT);
+        TokenTransfer expected = new TokenTransfer(consensusTimestamp, amount, tokenId, accountId, false,
+                transactionPayerId);
 
         // when
         tokenTransferRepository.insertTransferForTokenDissociate(accountId.getId(), amount, consensusTimestamp,
-                tokenId.getId());
+                tokenId.getId(), transactionPayerId.getId());
 
         // then
         assertThat(nftRepository.findAll()).isEmpty();
@@ -150,10 +153,11 @@ class TokenTransferRepositoryTest extends AbstractRepositoryTest {
     }
 
     private NftTransfer nftTransfer(EntityId tokenId, EntityId senderAccountId, long serialNumber,
-                                    long consensusTimestamp) {
+                                    long consensusTimestamp, EntityId payerAccountId) {
         NftTransfer nftTransfer = new NftTransfer();
         nftTransfer.setId(new NftTransferId(consensusTimestamp, serialNumber, tokenId));
         nftTransfer.setSenderAccountId(senderAccountId);
+        nftTransfer.setTransactionPayerAccountId(payerAccountId);
         return nftTransfer;
     }
 }

@@ -220,8 +220,8 @@ public class SqlEntityListener extends AbstractEntityListener implements RecordS
 
     @Override
     public void onEnd(RecordFile recordFile) {
-        executeBatchesInSequence();
-        recordFileRepository.save(recordFile);
+        executeBatchesInParallel(recordFile);
+//        recordFileRepository.save(recordFile);
     }
 
     @Override
@@ -290,6 +290,9 @@ public class SqlEntityListener extends AbstractEntityListener implements RecordS
             nftTransferPgCopy.copy(nftTransfers, connection);
             tokenTransferPgCopy.copy(tokenTransfers, connection);
 
+            // handle the transfers from token dissociate transactions after nft is processed
+            tokenDissociateTransferPgCopy.copy(tokenDissociateTransfers, connection);
+
             log.info("Completed batch inserts in {}", stopwatch);
         } catch (ParserException e) {
             throw e;
@@ -301,7 +304,7 @@ public class SqlEntityListener extends AbstractEntityListener implements RecordS
         }
     }
 
-    private void executeBatchesInParallel() {
+    private void executeBatchesInParallel(RecordFile recordFile) {
         Connection connection = null;
 
         try {
@@ -341,14 +344,17 @@ public class SqlEntityListener extends AbstractEntityListener implements RecordS
             addCopyTask(transferTasks, nonFeeTransferPgCopy, nonFeeTransfers);
             addCopyTask(transferTasks, nftTransferPgCopy, nftTransfers);
             addCopyTask(transferTasks, tokenTransferPgCopy, tokenTransfers);
+            addCopyTask(transferTasks, tokenDissociateTransferPgCopy, tokenDissociateTransfers);
             Stopwatch transferStopwatch = Stopwatch.createStarted();
             persistanceThreadPool.invokeAll(transferTasks);
             log.info("Completed transfer inserts in {}", transferStopwatch);
 
-            // handle the transfers from token dissociate transactions after nft is processed
-            tokenDissociateTransferPgCopy.copy(tokenDissociateTransfers, connection);
-
             log.info("Completed batch inserts in {}", stopwatch);
+
+            // connection release breaks tests in recordFileRepository in onEnd. Moving here temporarily
+            if (recordFile != null) {
+                recordFileRepository.save(recordFile);
+            }
         } catch (ParserException e) {
             throw e;
         } catch (Exception e) {
@@ -478,7 +484,7 @@ public class SqlEntityListener extends AbstractEntityListener implements RecordS
     public void onTransaction(Transaction transaction) throws ImporterException {
         transactions.add(transaction);
         if (transactions.size() == sqlProperties.getBatchSize()) {
-            executeBatchesInSequence();
+            executeBatchesInParallel(null);
         }
     }
 

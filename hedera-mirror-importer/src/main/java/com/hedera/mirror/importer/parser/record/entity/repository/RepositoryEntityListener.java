@@ -184,7 +184,8 @@ public class RepositoryEntityListener extends AbstractEntityListener {
         if (tokenTransfer.isTokenDissociate()) {
             TokenTransfer.Id id = tokenTransfer.getId();
             tokenTransferRepository.insertTransferForTokenDissociate(id.getAccountId().getId(),
-                    tokenTransfer.getAmount(), id.getConsensusTimestamp(), id.getTokenId().getId());
+                    tokenTransfer.getAmount(), id.getConsensusTimestamp(), id.getTokenId().getId(),
+                    tokenTransfer.getTransactionPayerAccountId().getId());
             return;
         }
 

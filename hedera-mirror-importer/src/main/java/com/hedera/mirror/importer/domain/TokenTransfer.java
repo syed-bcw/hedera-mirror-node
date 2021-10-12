@@ -48,15 +48,15 @@ public class TokenTransfer implements Persistable<TokenTransfer.Id> {
     }
 
     public TokenTransfer(long consensusTimestamp, long amount, EntityId tokenId, EntityId accountId,
-            boolean tokenDissociate) {
+                         boolean tokenDissociate) {
         id = new TokenTransfer.Id(consensusTimestamp, tokenId, accountId);
         this.amount = amount;
         this.tokenDissociate = tokenDissociate;
     }
 
     public TokenTransfer(long consensusTimestamp, long amount, EntityId tokenId, EntityId accountId,
-                         EntityId transactionPayerAccount) {
-        this(consensusTimestamp, amount, tokenId, accountId);
+                         boolean tokenDissociate, EntityId transactionPayerAccount) {
+        this(consensusTimestamp, amount, tokenId, accountId, tokenDissociate);
         transactionPayerAccountId = transactionPayerAccount;
     }
 

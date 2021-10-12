@@ -470,7 +470,7 @@ class RepositoryEntityListenerTest extends IntegrationTest {
 
     @Test
     void onTokenTransferFromDissociate() throws ImporterException {
-        TokenTransfer tokenTransfer = new TokenTransfer(10L, -2, TOKEN_ID, ENTITY_ID, true);
+        TokenTransfer tokenTransfer = new TokenTransfer(10L, -2, TOKEN_ID, ENTITY_ID, true, PAYER_ACCOUNT_ID);
         repositoryEntityListener.onTokenTransfer(tokenTransfer);
         assertThat(tokenTransferRepository.findAll())
                 .usingElementComparatorIgnoringFields("tokenDissociate")

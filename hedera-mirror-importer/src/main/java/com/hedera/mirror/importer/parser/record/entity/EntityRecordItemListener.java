@@ -686,14 +686,13 @@ public class EntityRecordItemListener implements RecordItemListener {
                 TransactionBody body = recordItem.getTransactionBody();
                 var transactionPayerAccount = EntityId.of(body.getTransactionID().getAccountID());
 
-                long consensusTimestamp = recordItem.getConsensusTimestamp();
                 tokenTransferList.getTransfersList().forEach(accountAmount -> {
                     EntityId accountId = EntityId.of(accountAmount.getAccountID());
                     entityListener.onEntityId(accountId);
 
                     long amount = accountAmount.getAmount();
                     entityListener.onTokenTransfer(new TokenTransfer(consensusTimestamp, amount, tokenId, accountId,
-                            transactionPayerAccount));
+                            isTokenDissociate, transactionPayerAccount));
 
                     if (isTokenDissociate) {
                         // token transfers in token dissociate are for deleted tokens and the amount is negative to

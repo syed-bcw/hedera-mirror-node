@@ -176,6 +176,7 @@ class PgCopyTest extends IntegrationTest {
                 1L,
                 EntityId.of(0L, 1L, 4L, EntityTypeEnum.TOKEN),
                 EntityId.of(0L, 1L, 2L, EntityTypeEnum.ACCOUNT),
+                false,
                 EntityId.of(0L, 1L, 100L, EntityTypeEnum.ACCOUNT));
     }
 
