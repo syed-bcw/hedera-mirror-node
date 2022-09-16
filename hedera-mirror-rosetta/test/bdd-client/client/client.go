@@ -239,8 +239,13 @@ func (c Client) Submit(ctx context.Context, operations []*types.Operation, memo 
 
 	trySubmit := func() (bool, *types.Error, error) {
 		// preprocess
+		metadata := make(map[string]interface{})
+		if len(memo) != 0 {
+			metadata["memo"] = memo
+		}
 		preprocessRequest := &types.ConstructionPreprocessRequest{
 			NetworkIdentifier: c.network,
+			Metadata:          metadata,
 			Operations:        operations,
 		}
 		preprocessResponse, rosettaErr, err := offlineConstructor.ConstructionPreprocess(ctx, preprocessRequest)
@@ -259,14 +264,10 @@ func (c Client) Submit(ctx context.Context, operations []*types.Operation, memo 
 		}
 
 		// payloads
-		metadata := metadataResponse.Metadata
-		if len(memo) != 0 {
-			metadata["memo"] = memo
-		}
 		payloadsRequest := &types.ConstructionPayloadsRequest{
 			NetworkIdentifier: c.network,
 			Operations:        operations,
-			Metadata:          metadata,
+			Metadata:          metadataResponse.Metadata,
 		}
 		payloadsResponse, rosettaErr, err := offlineConstructor.ConstructionPayloads(ctx, payloadsRequest)
 		if err1 := c.handleError("Failed to handle payloads request", rosettaErr, err); err1 != nil {

@@ -173,7 +173,7 @@ func (c *constructionAPIService) ConstructionMetadata(
 	}
 
 	response := &rTypes.ConstructionMetadataResponse{
-		Metadata:     map[string]interface{}{},
+		Metadata:     request.Options,
 		SuggestedFee: []*rTypes.Amount{maxFee.ToRosetta()},
 	}
 
@@ -204,6 +204,7 @@ func (c *constructionAPIService) ConstructionMetadata(
 		accountMap = append(accountMap, fmt.Sprintf("%s:%s", accountAlias, found))
 	}
 	response.Metadata[metadataKeyAccountMap] = strings.Join(accountMap, ",")
+	delete(response.Metadata, optionKeyAccountAliases)
 
 	return response, nil
 }
@@ -333,18 +334,23 @@ func (c *constructionAPIService) ConstructionPreprocess(
 		requiredPublicKeys = append(requiredPublicKeys, &rTypes.AccountIdentifier{Address: signer.String()})
 	}
 
-	response := &rTypes.ConstructionPreprocessResponse{
-		Options:            map[string]interface{}{optionKeyOperationType: operations[0].Type},
-		RequiredPublicKeys: requiredPublicKeys,
+	options := make(map[string]interface{})
+	if len(request.Metadata) != 0 {
+		options = request.Metadata
 	}
+
+	options[optionKeyOperationType] = operations[0].Type
 
 	// the first signer is always the payer account
 	payer := signers[0]
 	if payer.HasAlias() {
-		response.Options[optionKeyAccountAliases] = fmt.Sprintf("%s", payer)
+		options[optionKeyAccountAliases] = fmt.Sprintf("%s", payer)
 	}
 
-	return response, nil
+	return &rTypes.ConstructionPreprocessResponse{
+		Options:            options,
+		RequiredPublicKeys: requiredPublicKeys,
+	}, nil
 }
 
 // ConstructionSubmit implements the /construction/submit endpoint.

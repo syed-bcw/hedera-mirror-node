@@ -91,7 +91,7 @@ func getConstructionCombineRequest() *rTypes.ConstructionCombineRequest {
 	)
 }
 
-func getConstructionPreprocessRequest(valid bool) *rTypes.ConstructionPreprocessRequest {
+func getConstructionPreprocessRequest(valid bool, metadata map[string]interface{}) *rTypes.ConstructionPreprocessRequest {
 	operations := types.OperationSlice{
 		getOperation(0, types.OperationTypeCryptoTransfer, defaultCryptoAccountId1, defaultSendAmount),
 		getOperation(1, types.OperationTypeCryptoTransfer, defaultCryptoAccountId2, defaultReceiveAmount),
@@ -104,6 +104,7 @@ func getConstructionPreprocessRequest(valid bool) *rTypes.ConstructionPreprocess
 	}
 
 	return &rTypes.ConstructionPreprocessRequest{
+		Metadata:          metadata,
 		NetworkIdentifier: networkIdentifier(),
 		Operations:        operations.ToRosetta(),
 	}
@@ -533,13 +534,16 @@ func TestConstructionMetadataOnline(t *testing.T) {
 	request := &rTypes.ConstructionMetadataRequest{
 		NetworkIdentifier: networkIdentifier(),
 		Options: map[string]interface{}{
+			"memo":                  "tx memo",
 			optionKeyAccountAliases: aliasStr,
 			optionKeyOperationType:  types.OperationTypeCryptoTransfer,
 		},
 	}
 	expectedResponse := &rTypes.ConstructionMetadataResponse{
 		Metadata: map[string]interface{}{
-			metadataKeyAccountMap: fmt.Sprintf("%s:%s", aliasStr, accountId),
+			"memo":                 "tx memo",
+			metadataKeyAccountMap:  fmt.Sprintf("%s:%s", aliasStr, accountId),
+			optionKeyOperationType: types.OperationTypeCryptoTransfer,
 		},
 		SuggestedFee: []*rTypes.Amount{{Value: "100", Currency: types.CurrencyHbar}},
 	}
@@ -574,7 +578,7 @@ func TestConstructionMetadataOffline(t *testing.T) {
 		Options:           map[string]interface{}{optionKeyOperationType: types.OperationTypeCryptoTransfer},
 	}
 	expectedResponse := &rTypes.ConstructionMetadataResponse{
-		Metadata:     map[string]interface{}{},
+		Metadata:     map[string]interface{}{optionKeyOperationType: types.OperationTypeCryptoTransfer},
 		SuggestedFee: []*rTypes.Amount{{Value: "100", Currency: types.CurrencyHbar}},
 	}
 
@@ -1189,6 +1193,7 @@ func TestConstructionSubmitOffline(t *testing.T) {
 func TestConstructionPreprocess(t *testing.T) {
 	tests := []struct {
 		name     string
+		metadata map[string]interface{}
 		signers  []types.AccountId
 		expected *rTypes.ConstructionPreprocessResponse
 	}{
@@ -1201,10 +1206,12 @@ func TestConstructionPreprocess(t *testing.T) {
 			},
 		},
 		{
-			name:    "alias account signer",
-			signers: []types.AccountId{aliasAccount},
+			name:     "alias account signer",
+			metadata: map[string]interface{}{"memo": "tx memo"},
+			signers:  []types.AccountId{aliasAccount},
 			expected: &rTypes.ConstructionPreprocessResponse{
 				Options: map[string]interface{}{
+					"memo":                  "tx memo",
 					optionKeyAccountAliases: aliasStr,
 					optionKeyOperationType:  types.OperationTypeCryptoTransfer,
 				},
@@ -1223,7 +1230,7 @@ func TestConstructionPreprocess(t *testing.T) {
 			service, _ := NewConstructionAPIService(nil, onlineBaseService, defaultNetwork, defaultNodes, 0, 0, mockConstructor)
 
 			// when:
-			actual, err := service.ConstructionPreprocess(defaultContext, getConstructionPreprocessRequest(true))
+			actual, err := service.ConstructionPreprocess(defaultContext, getConstructionPreprocessRequest(true, tt.metadata))
 
 			// then:
 			assert.Equal(t, tt.expected, actual)
@@ -1241,7 +1248,7 @@ func TestConstructionPreprocessThrowsWithConstructorPreprocessFailure(t *testing
 	service, _ := NewConstructionAPIService(nil, onlineBaseService, defaultNetwork, defaultNodes, 0, 0, mockConstructor)
 
 	// when:
-	actual, e := service.ConstructionPreprocess(defaultContext, getConstructionPreprocessRequest(false))
+	actual, e := service.ConstructionPreprocess(defaultContext, getConstructionPreprocessRequest(false, nil))
 
 	// then:
 	assert.Nil(t, actual)
