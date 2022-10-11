@@ -15,10 +15,12 @@ import org.springframework.core.codec.DecodingException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -43,14 +45,16 @@ public class ApiContractController {
     private final ApiContractServiceFactory apiContractServiceFactory;
 
     @PostMapping(value = "/contracts")
-    public Mono<JsonRpcResponse> api(@Valid @RequestBody JsonRpcRequest<?> request) {
+    public Mono<JsonRpcResponse> api(@RequestBody @Valid JsonRpcRequest<?> request,
+                                     @RequestParam(required = false, name = "estimate") boolean estimate) {
         try {
             if (!request.getJsonrpc().equals(JsonRpcResponse.VERSION)) {
                 return response(request, new JsonRpcErrorResponse(
                         JsonRpcErrorCode.INVALID_REQUEST, INVALID_VERSION));
             }
 
-            ApiContractService<Object, Object> apiContractService = apiContractServiceFactory.lookup(request.getMethod());
+            ApiContractService<Object, Object> apiContractService =
+                    apiContractServiceFactory.lookup(request.getMethod());
 
             if (apiContractService == null) {
                 return response(request, new JsonRpcErrorResponse(
@@ -60,13 +64,19 @@ public class ApiContractController {
             final var params = (List<Object>) request.getParams();
             final var ethParams = (Map<String, String>) params.get(0);
 //            final var ethParamsConverted = new EthParams(ethParams.get("from"),
-//                    ethParams.get("to"), ethParams.get("gas"), ethParams.get("gasPrice"), ethParams.get("value"), ethParams.get("data"));
+//                    ethParams.get("to"), ethParams.get("gas"), ethParams.get("gasPrice"), ethParams.get("value"),
+//                    ethParams.get("data"));
 //            final var txnResult = new EthRpcCallBody(ethParamsConverted, (String) params.get(1));
 //            Object result = apiContractService.get(txnResult);
 
             JsonRpcSuccessResponse jsonRpcSuccessResponse = new JsonRpcSuccessResponse();
             jsonRpcSuccessResponse.setId(request.getId());
-//            jsonRpcSuccessResponse.setResult(result);
+            if (estimate) {
+                jsonRpcSuccessResponse.setGas("0x1");
+            } else {
+                jsonRpcSuccessResponse.setResult("0x1");
+//                jsonRpcSuccessResponse.setResult(result);
+            }
 
             return response(request, jsonRpcSuccessResponse);
         } catch (InvalidParametersException e) {
