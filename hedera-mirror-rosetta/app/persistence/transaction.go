@@ -452,7 +452,11 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 		transactionType := types.TransactionTypes[int32(transaction.Type)]
 
 		var feeHbarTransfers []hbarTransfer
-		feeHbarTransfers, nonFeeTransfers = categorizeHbarTransfers(cryptoTransfers, nonFeeTransfers)
+		if IsTransactionResultSuccessful(int32(transaction.Result)) {
+			feeHbarTransfers, nonFeeTransfers = categorizeHbarTransfers(cryptoTransfers, nonFeeTransfers)
+		} else {
+			feeHbarTransfers = cryptoTransfers
+		}
 
 		operations = tr.appendHbarTransferOperations(transactionResult, transactionType, nonFeeTransfers, operations)
 		// crypto transfers are always successful regardless of the transaction result

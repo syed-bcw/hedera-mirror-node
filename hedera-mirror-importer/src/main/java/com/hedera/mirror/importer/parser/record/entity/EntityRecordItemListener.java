@@ -163,6 +163,8 @@ public class EntityRecordItemListener implements RecordItemListener {
         // insert staking reward transfers even on failure
         insertStakingRewardTransfers(recordItem);
 
+        processNonFeeTransfers(consensusTimestamp, recordItem);
+
         // handle scheduled transaction, even on failure
         if (transaction.isScheduled()) {
             onScheduledTransaction(recordItem);
@@ -175,9 +177,6 @@ public class EntityRecordItemListener implements RecordItemListener {
                         recordItem.getConsensusTimestamp(),
                         recordItem.getSignatureMap().getSigPairList());
             }
-
-            // Only add non-fee transfers on success as the data is assured to be valid
-            processNonFeeTransfers(consensusTimestamp, recordItem);
 
             if (body.hasConsensusSubmitMessage()) {
                 insertConsensusTopicMessage(recordItem);
