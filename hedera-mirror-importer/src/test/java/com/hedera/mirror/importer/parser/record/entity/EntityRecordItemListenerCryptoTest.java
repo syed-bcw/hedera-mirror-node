@@ -821,7 +821,7 @@ class EntityRecordItemListenerCryptoTest extends AbstractEntityRecordItemListene
                 () -> assertEquals(1, transactionRepository.count()),
                 () -> assertEntities(),
                 () -> assertCryptoTransfers(3),
-                () -> assertEquals(1, nonFeeTransferRepository.count()),
+                () -> assertEquals(0, nonFeeTransferRepository.count()),
                 () -> assertTransactionAndRecord(transactionBody, record)
         );
     }
@@ -847,7 +847,7 @@ class EntityRecordItemListenerCryptoTest extends AbstractEntityRecordItemListene
                 () -> assertEquals(1, transactionRepository.count()),
                 () -> assertEntities(),
                 () -> assertEquals(4, cryptoTransferRepository.count(), "Node, network fee & errata"),
-                () -> assertEquals(1, nonFeeTransferRepository.count()),
+                () -> assertEquals(0, nonFeeTransferRepository.count()),
                 () -> assertTransactionAndRecord(transactionBody, record),
                 () -> {
                     for (int i = 0; i < additionalTransfers.length; i++) {

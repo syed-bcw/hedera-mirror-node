@@ -52,7 +52,6 @@ import org.junit.jupiter.api.Test;
 
 import com.hedera.mirror.common.domain.entity.EntityId;
 import com.hedera.mirror.common.domain.transaction.RecordItem;
-import com.hedera.mirror.common.exception.InvalidEntityException;
 import com.hedera.mirror.importer.util.Utility;
 
 /**
@@ -176,7 +175,8 @@ class EntityRecordItemListenerNonFeeTransferTest extends AbstractEntityRecordIte
     @Test
     void cryptoTransferFailedItemizedTransfersInvalidEntity() {
         entityProperties.getPersist().setNonFeeTransfers(true);
-        assertThrows(InvalidEntityException.class, this::givenFailedCryptoTransferTransactionInvalidEntity);
+        givenFailedCryptoTransferTransactionInvalidEntity();
+        assertEverything();
     }
 
     @Test
@@ -381,9 +381,6 @@ class EntityRecordItemListenerNonFeeTransferTest extends AbstractEntityRecordIte
     private void givenFailedCryptoTransferTransaction() {
         cryptoTransferWithTransferList(cryptoTransfer(), transferListForFailedCryptoTransferItemized(),
                 ResponseCodeEnum.INSUFFICIENT_PAYER_BALANCE);
-        if (entityProperties.getPersist().isNonFeeTransfers()) {
-            expectedNonFeeTransfersCount += 2;
-        }
     }
 
     private void givenFailedCryptoTransferTransactionInvalidEntity() {
