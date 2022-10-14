@@ -161,6 +161,7 @@ const (
                                                     ) order by entity_id)
                                                   from non_fee_transfer
                                                   where consensus_timestamp = t.consensus_timestamp
+                                                    and entity_id is not null
                                             ), '[]') as non_fee_transfers,
                                             coalesce((
                                               select json_agg(json_build_object(
@@ -417,8 +418,11 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 	*types.Transaction,
 	*rTypes.Error,
 ) {
+	allFailed := true
 	firstTransaction := sameHashTransactions[0]
-	tResult := &types.Transaction{Hash: firstTransaction.getHashString(), Memo: firstTransaction.Memo}
+	numNonFeeTransfers := 0
+	result := &types.Transaction{Hash: firstTransaction.getHashString(), Memo: firstTransaction.Memo}
+	transactionType := types.TransactionTypes[int32(firstTransaction.Type)]
 	operations := make(types.OperationSlice, 0)
 	success := types.TransactionResults[transactionResultSuccess]
 
@@ -448,15 +452,17 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 			return nil, hErrors.ErrInternalServerError
 		}
 
-		transactionResult := types.TransactionResults[int32(transaction.Result)]
-		transactionType := types.TransactionTypes[int32(transaction.Type)]
-
 		var feeHbarTransfers []hbarTransfer
 		if IsTransactionResultSuccessful(int32(transaction.Result)) {
+			allFailed = false
 			feeHbarTransfers, nonFeeTransfers = categorizeHbarTransfers(cryptoTransfers, nonFeeTransfers)
 		} else {
+			// for a failed transaction, all crypto transfers are fee
 			feeHbarTransfers = cryptoTransfers
 		}
+
+		numNonFeeTransfers += len(nonFeeTransfers)
+		transactionResult := types.TransactionResults[int32(transaction.Result)]
 
 		operations = tr.appendHbarTransferOperations(transactionResult, transactionType, nonFeeTransfers, operations)
 		// crypto transfers are always successful regardless of the transaction result
@@ -471,12 +477,24 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 		}
 
 		if IsTransactionResultSuccessful(int32(transaction.Result)) {
-			tResult.EntityId = transaction.EntityId
+			result.EntityId = transaction.EntityId
 		}
 	}
 
-	tResult.Operations = operations
-	return tResult, nil
+	if allFailed && numNonFeeTransfers == 0 {
+		// if all transactions with the same hash have failed and there is no valid non fee transfers (i.e., all
+		// transfers are fee thus the operations are marked as successful), add a failed 0 amount operation with payer
+		// as the account id
+		operations = tr.appendHbarTransferOperations(
+			types.TransactionResults[int32(firstTransaction.Result)],
+			transactionType,
+			[]hbarTransfer{{AccountId: firstTransaction.PayerAccountId}},
+			operations,
+		)
+	}
+
+	result.Operations = operations
+	return result, nil
 }
 
 func (tr *transactionRepository) appendHbarTransferOperations(
