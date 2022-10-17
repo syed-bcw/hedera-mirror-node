@@ -420,7 +420,6 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 ) {
 	allFailed := true
 	firstTransaction := sameHashTransactions[0]
-	numNonFeeTransfers := 0
 	result := &types.Transaction{Hash: firstTransaction.getHashString(), Memo: firstTransaction.Memo}
 	transactionType := types.TransactionTypes[int32(firstTransaction.Type)]
 	operations := make(types.OperationSlice, 0)
@@ -453,17 +452,9 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 		}
 
 		var feeHbarTransfers []hbarTransfer
-		if IsTransactionResultSuccessful(int32(transaction.Result)) {
-			allFailed = false
-			feeHbarTransfers, nonFeeTransfers = categorizeHbarTransfers(cryptoTransfers, nonFeeTransfers)
-		} else {
-			// for a failed transaction, all crypto transfers are fee
-			feeHbarTransfers = cryptoTransfers
-		}
+		feeHbarTransfers, nonFeeTransfers = categorizeHbarTransfers(cryptoTransfers, nonFeeTransfers)
 
-		numNonFeeTransfers += len(nonFeeTransfers)
 		transactionResult := types.TransactionResults[int32(transaction.Result)]
-
 		operations = tr.appendHbarTransferOperations(transactionResult, transactionType, nonFeeTransfers, operations)
 		// crypto transfers are always successful regardless of the transaction result
 		operations = tr.appendHbarTransferOperations(success, types.OperationTypeFee, feeHbarTransfers, operations)
@@ -477,20 +468,19 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 		}
 
 		if IsTransactionResultSuccessful(int32(transaction.Result)) {
+			allFailed = false
 			result.EntityId = transaction.EntityId
 		}
 	}
 
-	if allFailed && numNonFeeTransfers == 0 {
-		// if all transactions with the same hash have failed and there is no valid non fee transfers (i.e., all
-		// transfers are fee thus the operations are marked as successful), add a failed 0 amount operation with payer
-		// as the account id
-		operations = tr.appendHbarTransferOperations(
-			types.TransactionResults[int32(firstTransaction.Result)],
-			transactionType,
-			[]hbarTransfer{{AccountId: firstTransaction.PayerAccountId}},
-			operations,
-		)
+	if allFailed {
+		// add a nil amount operation with the failed status to indicate the transaction has failed
+		operations = append(operations, types.Operation{
+			AccountId: types.NewAccountIdFromEntityId(firstTransaction.PayerAccountId),
+			Index:     int64(len(operations)),
+			Status:    types.TransactionResults[int32(firstTransaction.Result)],
+			Type:      transactionType,
+		})
 	}
 
 	result.Operations = operations

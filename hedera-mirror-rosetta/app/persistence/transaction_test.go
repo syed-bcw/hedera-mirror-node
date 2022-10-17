@@ -997,8 +997,7 @@ func (suite *transactionRepositorySuite) setupDb(createTokenEntity bool) []*type
 				Status: resultSuccess},
 			{AccountId: nodeAccountId, Amount: &types.HbarAmount{Value: 20}, Type: types.OperationTypeFee,
 				Status: resultSuccess},
-			{AccountId: firstAccountId, Amount: &types.HbarAmount{}, Type: types.OperationTypeCryptoTransfer,
-				Status: types.TransactionResults[28]},
+			{AccountId: firstAccountId, Type: types.OperationTypeCryptoTransfer, Status: types.TransactionResults[28]},
 		},
 	}
 
