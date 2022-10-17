@@ -474,13 +474,13 @@ func (tr *transactionRepository) constructTransaction(sameHashTransactions []*tr
 	}
 
 	if allFailed {
-		// add a nil amount operation with the failed status to indicate the transaction has failed
-		operations = append(operations, types.Operation{
-			AccountId: types.NewAccountIdFromEntityId(firstTransaction.PayerAccountId),
-			Index:     int64(len(operations)),
-			Status:    types.TransactionResults[int32(firstTransaction.Result)],
-			Type:      transactionType,
-		})
+		// add 0 amount hbar transfer with the failed status to indicate the transaction has failed
+		operations = tr.appendHbarTransferOperations(
+			types.TransactionResults[int32(firstTransaction.Result)],
+			transactionType,
+			[]hbarTransfer{{AccountId: firstTransaction.PayerAccountId}},
+			operations,
+		)
 	}
 
 	result.Operations = operations
