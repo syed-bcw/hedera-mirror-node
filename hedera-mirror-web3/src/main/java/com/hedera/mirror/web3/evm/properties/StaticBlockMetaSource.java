@@ -2,6 +2,8 @@ package com.hedera.mirror.web3.evm.properties;
 
 import com.hedera.mirror.web3.repository.RecordFileRepository;
 
+import com.hedera.services.evm.contracts.execution.HederaBlockValues;
+
 import lombok.RequiredArgsConstructor;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.datatypes.Hash;

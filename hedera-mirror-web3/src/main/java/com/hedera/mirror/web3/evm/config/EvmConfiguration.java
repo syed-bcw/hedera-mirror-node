@@ -20,8 +20,8 @@ package com.hedera.mirror.web3.evm.config;
  * ‍
  */
 
-import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.concurrent.TimeUnit;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;

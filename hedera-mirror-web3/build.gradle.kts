@@ -25,14 +25,16 @@ plugins {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-configuration-processor:2.7.4")
     implementation(platform("org.springframework.cloud:spring-cloud-dependencies"))
     implementation(project(":common"))
-//    implementation("com.hedera.evm:hedera-evm-api")
     implementation("com.hedera.evm:hedera-evm-api")
+    implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("io.github.mweirauch:micrometer-jvm-extras")
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(group = "io.netty", name = "netty-resolver-dns-native-macos", classifier = "osx-aarch_64")
     implementation("javax.inject:javax.inject")
+    implementation("org.springframework:spring-context-support")
     implementation("org.springframework.boot:spring-boot-actuator-autoconfigure")
     implementation("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.springframework.boot:spring-boot-starter-logging")
@@ -44,4 +46,7 @@ dependencies {
     testImplementation("com.playtika.testcontainers:embedded-postgresql")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.flywaydb:flyway-core")
+}
+repositories {
+    mavenCentral()
 }
