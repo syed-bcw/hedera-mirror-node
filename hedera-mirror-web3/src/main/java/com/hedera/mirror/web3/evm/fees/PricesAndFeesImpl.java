@@ -1,13 +1,8 @@
-package com.hedera.mirror.web3.controller;
+package com.hedera.mirror.web3.evm.fees;
+
+import static com.hederahashgraph.api.proto.java.SubType.DEFAULT;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-
-import com.hedera.mirror.common.domain.entity.EntityId;
-import com.hedera.mirror.common.domain.entity.EntityType;
-import com.hedera.mirror.web3.evm.fees.PricesAndFeesProvider;
-import com.hedera.mirror.web3.evm.fees.RequiredPriceTypes;
-import com.hedera.mirror.web3.repository.PricesAndFeesRepository;
-
 import com.hederahashgraph.api.proto.java.CurrentAndNextFeeSchedule;
 import com.hederahashgraph.api.proto.java.ExchangeRate;
 import com.hederahashgraph.api.proto.java.ExchangeRateSet;
@@ -19,10 +14,6 @@ import com.hederahashgraph.api.proto.java.SubType;
 import com.hederahashgraph.api.proto.java.Timestamp;
 import com.hederahashgraph.api.proto.java.TimestampSeconds;
 import com.hederahashgraph.api.proto.java.TransactionFeeSchedule;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.EnumMap;
@@ -30,8 +21,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToLongFunction;
+import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
-import static com.hederahashgraph.api.proto.java.SubType.DEFAULT;
+import com.hedera.mirror.common.domain.entity.EntityId;
+import com.hedera.mirror.common.domain.entity.EntityType;
+import com.hedera.mirror.web3.repository.PricesAndFeesRepository;
+import com.hedera.services.evm.contracts.execution.PricesAndFeesProvider;
 
 @Component
 @RequiredArgsConstructor
