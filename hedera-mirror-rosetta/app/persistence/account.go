@@ -23,6 +23,7 @@ package persistence
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -204,9 +205,10 @@ func (ar *accountRepository) GetAccountAlias(ctx context.Context, accountId type
 
 	if accountAlias, err := types.NewAccountIdFromEntity(entity); err == nil {
 		return accountAlias, nil
+	} else {
+		log.Warnf("Failed to create AccountId from alias '0x%s': %v", hex.EncodeToString(entity.Alias), err)
+		return accountId, nil
 	}
-
-	return zero, hErrors.ErrInternalServerError
 }
 
 func (ar *accountRepository) GetAccountId(ctx context.Context, accountId types.AccountId) (
