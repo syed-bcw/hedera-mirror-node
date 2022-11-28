@@ -78,7 +78,7 @@ jobs:
   marketplace:
     name: GCP Marketplace release
     needs: chart
-    if: !contains(github.ref, '-')
+    if: "!contains(github.ref, '-')"
     runs-on: ubuntu-latest
     env:
       MPDEV: "/home/runner/bin/mpdev"
