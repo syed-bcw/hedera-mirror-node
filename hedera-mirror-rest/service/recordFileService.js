@@ -21,6 +21,7 @@
 import _ from 'lodash';
 import BaseService from './baseService';
 import {RecordFile} from '../model';
+import {JSONStringify} from "../utils.js";
 
 const buildWhereSqlStatement = (whereQuery) => {
   let where = '';
@@ -77,6 +78,7 @@ class RecordFileService extends BaseService {
    * @return {Promise<RecordFile>} recordFile subset
    */
   async getRecordFileBlockDetailsFromTimestamp(timestamp) {
+    logger.info(`getRecordFileBlockDetailsFromTimestamp \n ${RecordFileService.recordFileBlockDetailsFromTimestampQuery} ${JSONStringify([timestamp])}`)
     const row = await super.getSingleRow(
       RecordFileService.recordFileBlockDetailsFromTimestampQuery,
       [timestamp],
@@ -93,6 +95,7 @@ class RecordFileService extends BaseService {
    * @return {Promise<RecordFile>} recordFile subset
    */
   async getRecordFileBlockDetailsFromIndex(index) {
+    logger.info()
     const row = await super.getSingleRow(
       RecordFileService.recordFileBlockDetailsFromIndexQuery,
       [index],

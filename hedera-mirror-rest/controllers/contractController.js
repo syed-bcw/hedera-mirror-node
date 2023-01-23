@@ -1065,7 +1065,8 @@ class ContractController extends BaseController {
         TransactionService.getEthTransactionByHash(ethHash, excludeTransactionResults, 1),
         ContractService.getContractResultsByHash(ethHash, excludeTransactionResults, 1),
       ]);
-    } else {
+    }
+    else {
       const transactionId = TransactionId.fromString(transactionIdOrHash);
       const nonce = getLastNonceParamValue(req.query);
       // Map the transactions id to a consensus timestamp

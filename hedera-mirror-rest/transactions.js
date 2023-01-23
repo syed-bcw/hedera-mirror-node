@@ -658,9 +658,7 @@ const getTransactions = async (req, res) => {
   utils.validateReq(req);
 
   const query = reqToSql(req);
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getTransactions query: ${query.query} ${utils.JSONStringify(query.params)}`);
-  }
+  logger.info(`getTransactions query: ${query.query} ${utils.JSONStringify(query.params)}`);
 
   // Execute query
   const {rows, sqlQuery} = await pool.queryQuietly(query.query, query.params);
@@ -773,9 +771,7 @@ const extractSqlFromTransactionsByIdOrHashRequest = (transactionIdOrHash, filter
 const getTransactionsByIdOrHash = async (req, res) => {
   const filters = utils.buildAndValidateFilters(req.query);
   const {query, params} = extractSqlFromTransactionsByIdOrHashRequest(req.params.transactionIdOrHash, filters);
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getTransactionsByIdOrHash query: ${query} ${utils.JSONStringify(params)}`);
-  }
+  logger.info(`getTransactionsByIdOrHash query: ${query} ${utils.JSONStringify(params)}`);
 
   // Execute query
   const {rows} = await pool.queryQuietly(query, params);

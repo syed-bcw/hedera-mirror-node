@@ -334,9 +334,7 @@ const getOneAccount = async (req, res) => {
   const transactionsQuery = transactions.getTransactionsOuterQuery(innerQuery, order);
   const pgTransactionsQuery = utils.convertMySqlStyleQueryToPostgres(transactionsQuery);
 
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getOneAccount transactions query: ${pgTransactionsQuery} ${utils.JSONStringify(innerParams)}`);
-  }
+  logger.info(`getOneAccount transactions query: ${pgTransactionsQuery} \n InnerQuery:  ${utils.JSONStringify(innerParams)}`);
 
   // Execute query & get a promise
   const transactionsPromise = pool.queryQuietly(pgTransactionsQuery, innerParams);

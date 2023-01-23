@@ -24,6 +24,7 @@ import BaseService from './baseService';
 import {orderFilterValues} from '../constants';
 import {EthereumTransaction, Transaction} from '../model';
 import {OrderSpec} from '../sql';
+import {JSONStringify} from "../utils.js";
 
 /**
  * Transaction retrieval business logic
@@ -96,6 +97,7 @@ class TransactionService extends BaseService {
       limit ? `limit ${limit}` : '',
     ].join('\n');
 
+    logger.info(`Get Eth By transaction hash \n ${query} ${JSONStringify(params)}`)
     const rows = await super.getRows(query, params, 'getEthereumTransactionByHash');
     return rows.map((row) => new EthereumTransaction(row));
   }
@@ -106,6 +108,7 @@ class TransactionService extends BaseService {
       `where ${EthereumTransaction.getFullName(EthereumTransaction.CONSENSUS_TIMESTAMP)} = $1`,
     ].join('\n');
 
+    logger.info(`getEthTransactionByTimestamp \n ${query} ${JSONStringify([timestamp])}`)
     const rows = await super.getRows(query, [timestamp], 'getEthereumTransactionByTimestamp');
     return rows.map((row) => new EthereumTransaction(row));
   }
@@ -136,6 +139,7 @@ class TransactionService extends BaseService {
       query += ` ${this.getLimitQuery(params.length)}`;
     }
 
+    logger.info(`getTransactionDetails ${query} ${JSONStringify(params)}`)
     const rows = await super.getRows(query, params, parentFunctionName);
     return rows.map((row) => new Transaction(row));
   }

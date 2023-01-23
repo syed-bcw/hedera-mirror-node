@@ -904,9 +904,7 @@ const getNftTransferHistoryRequest = async (req, res) => {
   const filters = utils.buildAndValidateFilters(req.query, validateTokenQueryFilter);
 
   const {query, params, limit, order} = extractSqlFromNftTransferHistoryRequest(tokenId, serialNumber, filters);
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getNftTransferHistory query: ${query} ${utils.JSONStringify(params)}`);
-  }
+  logger.info(`getNftTransferHistory query: ${query} ${utils.JSONStringify(params)}`);
 
   const {rows} = await pool.queryQuietly(query, params);
   const response = {

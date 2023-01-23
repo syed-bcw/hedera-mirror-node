@@ -150,12 +150,8 @@ app.getAsync(`${apiPrefix}/schedules`, schedules.getSchedules);
 app.getAsync(`${apiPrefix}/schedules/:scheduleId`, schedules.getScheduleById);
 
 // stateproof route
-if (config.stateproof.enabled || isTestEnv()) {
-  logger.info('stateproof REST API is enabled, install handler');
-  app.getAsync(`${apiPrefix}/transactions/:transactionId/stateproof`, stateproof.getStateProofForTransaction);
-} else {
-  logger.info('stateproof REST API is disabled');
-}
+logger.info('stateproof REST API is enabled, install handler');
+app.getAsync(`${apiPrefix}/transactions/:transactionId/stateproof`, stateproof.getStateProofForTransaction);
 
 // tokens routes
 app.getAsync(`${apiPrefix}/tokens`, tokens.getTokensRequest);

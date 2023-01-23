@@ -41,6 +41,7 @@ const recordFileSuffixRegex = /\.rcd(\.gz)?$/;
  * @returns {Promise<String>} consensus_timestamp of the successful transaction if found
  */
 const getSuccessfulTransactionConsensusNs = async (transactionId, nonce, scheduled) => {
+  logger.info('Generating query')
   const sqlParams = [transactionId.getEntityId().getEncodedId(), transactionId.getValidStartNs(), nonce, scheduled];
   const sqlQuery = `SELECT consensus_timestamp
        FROM transaction
@@ -49,9 +50,7 @@ const getSuccessfulTransactionConsensusNs = async (transactionId, nonce, schedul
          AND nonce = $3
          AND scheduled = $4
          AND result = 22`; // only the successful transaction
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getSuccessfulTransactionConsensusNs: ${sqlQuery}, ${utils.JSONStringify(sqlParams)}`);
-  }
+  logger.info(`getSuccessfulTransactionConsensusNs: ${sqlQuery}, ${utils.JSONStringify(sqlParams)}`);
 
   const {rows} = await pool.queryQuietly(sqlQuery, sqlParams);
   if (_.isEmpty(rows)) {
@@ -81,9 +80,7 @@ const getRCDFileInfoByConsensusNs = async (consensusNs) => {
        where consensus_end >= $1
        order by consensus_end
        limit 1`;
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getRCDFileNameByConsensusNs: ${sqlQuery}, ${consensusNs}`);
-  }
+  logger.info(`getRCDFileNameByConsensusNs: ${sqlQuery}, ${consensusNs}`);
 
   const {rows} = await pool.queryQuietly(sqlQuery, consensusNs);
   if (_.isEmpty(rows)) {
@@ -128,9 +125,7 @@ const getAddressBooksAndNodeAccountIdsByConsensusNs = async (consensusNs) => {
       LIMIT 1`;
   }
 
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getAddressBooksAndNodeAccountIDsByConsensusNs: ${sqlQuery}, ${consensusNs}`);
-  }
+  logger.info(`getAddressBooksAndNodeAccountIDsByConsensusNs: ${sqlQuery}, ${consensusNs}`);
 
   const {rows} = await pool.queryQuietly(sqlQuery, consensusNs);
   if (_.isEmpty(rows)) {
@@ -294,6 +289,7 @@ const formatRecordFile = (data, transactionId, nonce, scheduled) => {
  * @returns none
  */
 const getStateProofForTransaction = async (req, res) => {
+  logger.info('Doing stuff what is going on')
   const filters = utils.buildAndValidateFilters(req.query);
 
   const transactionId = TransactionId.fromString(req.params.transactionId);

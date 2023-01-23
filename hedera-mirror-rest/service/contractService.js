@@ -37,6 +37,7 @@ import {
   RecordFile,
   Transaction,
 } from '../model';
+import util from "util";
 
 const {default: defaultLimit} = getResponseLimit();
 const contractLogsFields = `${ContractLog.getFullName(ContractLog.BLOOM)},
@@ -258,6 +259,7 @@ class ContractService extends BaseService {
     limit = defaultLimit
   ) {
     const [query, params] = this.getContractResultsByIdAndFiltersQuery(whereConditions, whereParams, order, limit);
+    logger.info(`getContractResultsByIdAndFilters ${query} ${JSONStringify(params)}`)
     const rows = await super.getRows(query, params, 'getContractResultsByIdAndFilters');
     return rows.map((cr) => {
       return {
@@ -301,6 +303,7 @@ class ContractService extends BaseService {
       whereClause,
     ].join('\n');
 
+    logger.info(`getContractResults \n ${query} ${JSONStringify([params])}\n`)
     const rows = await super.getRows(query, params, 'getContractResultsByTimestamps');
 
     return rows.map((row) => {
@@ -342,6 +345,8 @@ class ContractService extends BaseService {
       this.getOrderByQuery(OrderSpec.from(ContractResult.CONSENSUS_TIMESTAMP, 'asc')),
       limit ? `limit ${limit}` : '',
     ].join('\n');
+
+    logger.info(`Get contract results by hash \n ${query} ${JSONStringify(params)}\n`)
     const rows = await super.getRows(query, params, 'getContractResultsByHash');
 
     return rows.map((row) => {
@@ -429,6 +434,7 @@ class ContractService extends BaseService {
     const orderClause = `order by ${ContractLog.CONSENSUS_TIMESTAMP}, ${ContractLog.INDEX}`;
 
     const query = [ContractService.contractLogsWithEvmAddressQuery, whereClause, orderClause].join('\n');
+    logger.info(`getContractLogsByTimestamps \n ${query} ${JSONStringify(params)}`)
     const rows = await super.getRows(query, params, 'getContractLogsByTimestamps');
     return rows.map((row) => new ContractLog(row));
   }
@@ -455,6 +461,8 @@ class ContractService extends BaseService {
     const whereClause = 'where ' + conditions.join(' and ');
     const orderClause = `order by ${ContractStateChange.CONSENSUS_TIMESTAMP}, ${ContractStateChange.CONTRACT_ID}, ${ContractStateChange.SLOT}`;
     const query = [ContractService.contractStateChangesQuery, whereClause, orderClause].join('\n');
+
+    logger.info(`getContractStateChangesByTimestamps \n ${query} ${JSONStringify(params)}`)
     const rows = await super.getRows(query, params, 'getContractStateChangesByTimestamps');
 
     return rows.map((row) => {

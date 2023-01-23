@@ -206,9 +206,7 @@ const extractSqlFromTopicMessagesRequest = (topicId, filters) => {
  * Retrieves topic message from
  */
 const getMessage = async (pgSqlQuery, pgSqlParams) => {
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getMessage query: ${pgSqlQuery}, params: ${pgSqlParams}`);
-  }
+  logger.info(`getMessage query: ${pgSqlQuery}, params: ${pgSqlParams}`);
 
   const {rows} = await pool.queryQuietly(pgSqlQuery, pgSqlParams);
   if (rows.length !== 1) {
@@ -223,9 +221,7 @@ const getMessage = async (pgSqlQuery, pgSqlParams) => {
 };
 
 const getMessages = async (pgSqlQuery, pgSqlParams, preQueryHint) => {
-  if (logger.isTraceEnabled()) {
-    logger.trace(`getMessages query: ${pgSqlQuery}, params: ${pgSqlParams}`);
-  }
+  logger.info(`getMessages query: ${pgSqlQuery}, params: ${pgSqlParams}`);
 
   const {rows} = await pool.queryQuietly(pgSqlQuery, pgSqlParams, preQueryHint);
   logger.debug(`getMessages returning ${rows.length} entries`);

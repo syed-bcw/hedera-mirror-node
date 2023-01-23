@@ -92,7 +92,7 @@ services:
 
   rest:
     image: gcr.io/mirrornode/hedera-mirror-rest:0.73.0-SNAPSHOT
-    pull_policy: always
+    pull_policy: if_not_present
     environment:
       HEDERA_MIRROR_REST_DB_HOST: db
     ports:
