@@ -117,11 +117,13 @@ public class ContractResultServiceImpl implements ContractResultService {
                     throw new InvalidDatasetException("Invalid caller for contract action: " + action.getCallerCase());
         }
 
-        // ContractCreate transaction has no recipient
         switch (action.getRecipientCase()) {
             case RECIPIENT_ACCOUNT -> contractAction.setRecipientAccount(EntityId.of(action.getRecipientAccount()));
             case RECIPIENT_CONTRACT -> contractAction.setRecipientContract(EntityId.of(action.getRecipientContract()));
             case TARGETED_ADDRESS -> contractAction.setRecipientAddress(action.getTargetedAddress().toByteArray());
+            default -> {
+                // ContractCreate transaction has no recipient
+            }
         }
 
         switch (action.getResultDataCase()) {
@@ -277,6 +279,7 @@ public class ContractResultServiceImpl implements ContractResultService {
         entityListener.onEntity(entity);
     }
 
+    @SuppressWarnings("java:S3776")
     private ByteString processSidecarRecords(RecordItem recordItem) {
         ByteString failedInitcode = null;
         var sidecarRecords = recordItem.getSidecarRecords();
@@ -310,7 +313,6 @@ public class ContractResultServiceImpl implements ContractResultService {
                     failedInitcode = sidecarRecord.getBytecode().getInitcode();
                 }
             }
-
             if (migration) {
                 ++migrationCount;
             }

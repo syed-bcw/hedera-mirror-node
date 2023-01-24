@@ -674,6 +674,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NetworkStakeResponse'
+        400:
+          $ref: '#/components/responses/InvalidParameterError'
         404:
           $ref: '#/components/responses/NotFoundError'
         500:
@@ -1091,6 +1093,7 @@ paths:
         - $ref: '#/components/parameters/accountIdQueryParam'
         - $ref: '#/components/parameters/limitQueryParam'
         - $ref: '#/components/parameters/orderQueryParamDesc'
+        - $ref: '#/components/parameters/serialNumberQueryParam'
       responses:
         200:
           description: OK
@@ -1133,6 +1136,7 @@ paths:
         - $ref: '#/components/parameters/serialNumberPathParam'
         - $ref: '#/components/parameters/limitQueryParam'
         - $ref: '#/components/parameters/orderQueryParamDesc'
+        - $ref: '#/components/parameters/timestampQueryParam'
       responses:
         200:
           description: OK
@@ -1175,7 +1179,7 @@ tags:
     description: The tokens object represents the information associated with a token entity and returns a list of token information.
 info:
   title: Hedera Mirror Node REST API
-  version: 0.73.0-SNAPSHOT
+  version: 0.74.0-SNAPSHOT
   license:
     name: Apache-2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
