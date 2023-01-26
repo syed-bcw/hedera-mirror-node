@@ -24,3 +24,10 @@ hedera:
               - entities: 1
                 tps: 2
                 type: CONSENSUSSUBMITMESSAGE
+
+spring:
+  redis:
+    host: localhost
+    password: foobar
+    port: 6379
+    username: "" # Redis 5 does not support authentication with a username and will fail if provided
