@@ -21,6 +21,7 @@ package com.hedera.mirror.importer.parser.record;
  */
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.constraints.Min;
@@ -36,6 +37,10 @@ public class ParserPerformanceProperties {
 
     @NotNull
     private Duration duration = Duration.ofSeconds(60L);
+
+    private Instant startDate;
+
+    private long startSequenceNumber;
 
     @NotNull
     private List<PerformanceTransactionProperties> transactions = Collections.emptyList();

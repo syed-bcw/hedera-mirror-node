@@ -138,7 +138,7 @@ public class RecordItemBuilder {
     private static final AccountID TREASURY = AccountID.newBuilder().setAccountNum(98).build();
 
     private final Map<TransactionType, Supplier<Builder>> builders = new HashMap<>();
-    private final AtomicLong id = new AtomicLong(0L);
+    private final AtomicLong id = new AtomicLong(1000L);
     private final SecureRandom random = new SecureRandom();
 
     private Instant now = Instant.now();
@@ -468,7 +468,7 @@ public class RecordItemBuilder {
 
     public void reset(Instant start) {
         now = start;
-        id.set(0L);
+        id.set(1000L);
     }
 
     public Builder<ScheduleCreateTransactionBody.Builder> scheduleCreate() {
@@ -683,7 +683,7 @@ public class RecordItemBuilder {
     }
 
     public Timestamp timestamp(TemporalUnit unit) {
-        return Utility.instantToTimestamp(now.plus(id(), unit));
+        return Utility.instantToTimestamp(now.plus(id() - 1000L, unit));
     }
 
     public TokenID tokenId() {

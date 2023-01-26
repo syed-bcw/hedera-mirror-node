@@ -97,32 +97,28 @@ public abstract class AbstractStreamFileParser<T extends StreamFile> implements 
     protected abstract void doParse(T streamFile);
 
     private boolean shouldParse(T streamFile) {
-        if (!parserProperties.isEnabled()) {
-            return false;
-        }
+        return parserProperties.isEnabled();
 
-        var last = streamFileRepository.findLatest();
-
-        if (last.isEmpty()) {
-            return true;
-        }
-
-        var lastStreamFile = last.get();
-        var name = streamFile.getName();
-
-        if (lastStreamFile.getConsensusEnd() >= streamFile.getConsensusStart()) {
-            log.warn("Skipping existing stream file {}", name);
-            return false;
-        }
-
-        var actualHash = streamFile.getPreviousHash();
-        var expectedHash = lastStreamFile.getHash();
-
-        // Verify hash chain
-        if (streamFile.getType().isChained() && !expectedHash.contentEquals(actualHash)) {
-            throw new HashMismatchException(name, expectedHash, actualHash, getClass().getSimpleName());
-        }
-
-        return true;
+//        var last = streamFileRepository.findLatest();
+//
+//        if (last.isEmpty()) {
+//            return true;
+//        }
+//
+//        var lastStreamFile = last.get();
+//        var name = streamFile.getName();
+//
+//        if (lastStreamFile.getConsensusEnd() >= streamFile.getConsensusStart()) {
+//            log.warn("Skipping existing stream file {}", name);
+//            return false;
+//        }
+//
+//        var actualHash = streamFile.getPreviousHash();
+//        var expectedHash = lastStreamFile.getHash();
+//
+//        // Verify hash chain
+//        if (streamFile.getType().isChained() && !expectedHash.contentEquals(actualHash)) {
+//            throw new HashMismatchException(name, expectedHash, actualHash, getClass().getSimpleName());
+//        }
     }
 }

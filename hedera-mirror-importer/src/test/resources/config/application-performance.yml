@@ -10,7 +10,12 @@ hedera:
       parser:
         record:
           performance:
+            startDate: 2023-02-06T18:00:00Z
+            startSequenceNumber: 5000000
             transactions:
               - entities: 1
                 tps: 1
                 type: CRYPTOTRANSFER
+              - entities: 1
+                tps: 2
+                type: CONSENSUSSUBMITMESSAGE

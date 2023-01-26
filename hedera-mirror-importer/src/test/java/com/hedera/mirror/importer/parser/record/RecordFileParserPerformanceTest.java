@@ -24,6 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
+
+import com.hedera.mirror.common.domain.DomainBuilder;
+import com.hedera.mirror.common.domain.transaction.RecordFile;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,7 @@ class RecordFileParserPerformanceTest {
     private final RecordFileParser recordFileParser;
     private final RecordFileBuilder recordFileBuilder;
     private final RecordFileRepository recordFileRepository;
+    private final DomainBuilder domainBuilder;
 
     @Test
     void scenarios() {
@@ -55,9 +59,19 @@ class RecordFileParserPerformanceTest {
         long duration = performanceProperties.getDuration().toMillis();
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
+
+        recordFileBuilder.setStartSequenceNumber(performanceProperties.getStartSequenceNumber());
         var builder = recordFileBuilder.recordFile();
         boolean workDone = false; // used just to assert that at least one cycle through the main "while" loop of this routine occurred.
         recordFileRepository.findLatest().ifPresent(builder::previous);
+
+        var startDate = performanceProperties.getStartDate();
+        if (startDate != null) {
+            var previous = domainBuilder.recordFile()
+                    .customize(r -> r.consensusStart(startDate.getEpochSecond() * 1_000_000_000L + startDate.getNano()))
+                    .get();
+            builder.previous(previous);
+        }
 
         performanceProperties.getTransactions().forEach(p -> {
             int count = (int) (p.getTps() * interval / 1000);

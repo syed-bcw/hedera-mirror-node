@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 import javax.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
@@ -53,6 +54,9 @@ public class RecordFileBuilder {
 
     private final DomainBuilder domainBuilder;
     private final RecordItemBuilder recordItemBuilder;
+
+    @Setter
+    private long startSequenceNumber;
 
     public Builder recordFile() {
         return new Builder();
@@ -203,7 +207,7 @@ public class RecordFileBuilder {
             var consensusTimestamp = recordItemBuilder.timestamp(ChronoUnit.NANOS);
             var validStart = Utility.instantToTimestamp(Utility.convertToInstant(consensusTimestamp).minusNanos(10));
             return builder.record(r -> r.setConsensusTimestamp(consensusTimestamp))
-                    .receipt(r -> r.setTopicSequenceNumber(id.getAndIncrement()))
+                    .receipt(r -> r.setTopicSequenceNumber(id.getAndIncrement() + startSequenceNumber))
                     .transactionBodyWrapper(tb -> tb.getTransactionIDBuilder().setTransactionValidStart(validStart))
                     .build();
         }
