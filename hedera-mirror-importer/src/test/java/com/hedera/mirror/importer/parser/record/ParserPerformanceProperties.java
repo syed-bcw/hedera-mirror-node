@@ -38,7 +38,11 @@ public class ParserPerformanceProperties {
     @NotNull
     private Duration duration = Duration.ofSeconds(60L);
 
-    private Instant startDate;
+    @NotNull
+    private Instant startDate = Instant.EPOCH;
+
+    @NotNull
+    private Instant endDate = Instant.EPOCH;
 
     private long startSequenceNumber;
 

@@ -22,6 +22,7 @@ package com.hedera.mirror.importer.parser.record;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -29,7 +30,6 @@ import com.hedera.mirror.common.domain.DomainBuilder;
 import com.hedera.mirror.common.domain.StreamType;
 import com.hedera.mirror.importer.config.IntegrationTestConfiguration;
 import com.hedera.mirror.importer.parser.domain.RecordFileBuilder;
-import com.hedera.mirror.importer.repository.RecordFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -48,46 +48,43 @@ class RecordFileParserPerformanceTest {
     private final ParserPerformanceProperties performanceProperties;
     private final RecordFileParser recordFileParser;
     private final RecordFileBuilder recordFileBuilder;
-    private final RecordFileRepository recordFileRepository;
     private final DomainBuilder domainBuilder;
 
     @Test
     void scenarios() {
         long interval = StreamType.RECORD.getFileCloseInterval().toMillis();
-        long duration = performanceProperties.getDuration().toMillis();
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime;
+        long endTime = System.currentTimeMillis();
+        var startDate = performanceProperties.getStartDate();
+        var endDate = performanceProperties.getEndDate();
 
         recordFileBuilder.setStartSequenceNumber(performanceProperties.getStartSequenceNumber());
         var builder = recordFileBuilder.recordFile();
         boolean workDone = false; // used just to assert that at least one cycle through the main "while" loop of this routine occurred.
-        recordFileRepository.findLatest().ifPresent(builder::previous);
 
-        var startDate = performanceProperties.getStartDate();
-        if (startDate != null) {
-            var previous = domainBuilder.recordFile()
-                    .customize(r -> r.consensusStart(startDate.getEpochSecond() * 1_000_000_000L + startDate.getNano()))
-                    .get();
-            builder.previous(previous);
-        }
+        var previous = domainBuilder.recordFile()
+                .customize(r -> r.consensusStart(startDate.getEpochSecond() * 1_000_000_000L + startDate.getNano()))
+                .get();
+        builder.previous(previous);
 
         performanceProperties.getTransactions().forEach(p -> {
             int count = (int) (p.getTps() * interval / 1000);
             builder.recordItems(i -> i.count(count).entities(p.getEntities()).type(p.getType()));
         });
 
-        while (endTime - startTime < duration) {
+        var lastInstant = startDate;
+        while (lastInstant.isBefore(endDate)) {
             var recordFile = builder.build();
             recordFileParser.parse(recordFile);
             workDone = true;
 
-            long sleep = interval - (System.currentTimeMillis() - endTime);
+            long sleep = (interval - (System.currentTimeMillis() - endTime)) / 100;
             if (sleep > 0) {
                 Uninterruptibles.sleepUninterruptibly(sleep, TimeUnit.MILLISECONDS);
             }
             endTime = System.currentTimeMillis();
 
             builder.previous(recordFile);
+            lastInstant = Instant.ofEpochSecond(0, recordFile.getConsensusStart());
         }
 
         assertTrue(workDone); // Sonarcloud needs at least one assert per @Test, or else calls it a "critical" code smell
