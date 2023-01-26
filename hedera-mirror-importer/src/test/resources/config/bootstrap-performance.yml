@@ -1,3 +1,5 @@
 embedded:
+  containers:
+    enabled: false
   postgresql:
     enabled: false
