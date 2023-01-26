@@ -81,37 +81,38 @@ public class MirrorDateRangePropertiesProcessor {
     }
 
     private DateRangeFilter newDateRangeFilter(StreamType streamType) {
-        DownloaderProperties downloaderProperties = getDownloaderProperties(streamType);
+//        DownloaderProperties downloaderProperties = getDownloaderProperties(streamType);
 
-        if (!downloaderProperties.isEnabled()) {
-            return DateRangeFilter.empty();
-        }
-
-        Instant startDate = mirrorProperties.getStartDate();
-        Instant endDate = mirrorProperties.getEndDate();
-        Instant lastFileInstant = findLatest(streamType).map(StreamFile::getConsensusStart)
-                .map(nanos -> Instant.ofEpochSecond(0, nanos))
-                .orElse(null);
-        Instant filterStartDate = lastFileInstant;
-
-        if (startDate != null && startDate.compareTo(endDate) > 0) {
-            throw new InvalidConfigurationException(String.format("Date range constraint violation: " +
-                    "startDate (%s) > endDate (%s)", startDate, endDate));
-        }
-
-        if (startDate != null) {
-            filterStartDate = max(startDate, lastFileInstant);
-        } else {
-            if (mirrorProperties.getNetwork() != MirrorProperties.HederaNetwork.DEMO && lastFileInstant == null) {
-                filterStartDate = STARTUP_TIME;
-            }
-        }
-
-        DateRangeFilter filter = new DateRangeFilter(filterStartDate, endDate);
-
-        log.info("{}: parser will parse items in the range [{}, {}]",
-                downloaderProperties.getStreamType(), filter.getStartAsInstant(), filter.getEndAsInstant());
-        return filter;
+        return DateRangeFilter.all();
+//        if (!downloaderProperties.isEnabled()) {
+//            return DateRangeFilter.empty();
+//        }
+//
+//        Instant startDate = mirrorProperties.getStartDate();
+//        Instant endDate = mirrorProperties.getEndDate();
+//        Instant lastFileInstant = findLatest(streamType).map(StreamFile::getConsensusStart)
+//                .map(nanos -> Instant.ofEpochSecond(0, nanos))
+//                .orElse(null);
+//        Instant filterStartDate = lastFileInstant;
+//
+//        if (startDate != null && startDate.compareTo(endDate) > 0) {
+//            throw new InvalidConfigurationException(String.format("Date range constraint violation: " +
+//                    "startDate (%s) > endDate (%s)", startDate, endDate));
+//        }
+//
+//        if (startDate != null) {
+//            filterStartDate = max(startDate, lastFileInstant);
+//        } else {
+//            if (mirrorProperties.getNetwork() != MirrorProperties.HederaNetwork.DEMO && lastFileInstant == null) {
+//                filterStartDate = STARTUP_TIME;
+//            }
+//        }
+//
+//        DateRangeFilter filter = new DateRangeFilter(filterStartDate, endDate);
+//
+//        log.info("{}: parser will parse items in the range [{}, {}]",
+//                downloaderProperties.getStreamType(), filter.getStartAsInstant(), filter.getEndAsInstant());
+//        return filter;
     }
 
     /**
