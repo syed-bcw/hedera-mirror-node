@@ -2,7 +2,7 @@
  * ‌
  * Hedera Mirror Node
  * ​
- * Copyright (C) 2019 - 2022 Hedera Hashgraph, LLC
+ * Copyright (C) 2019 - 2023 Hedera Hashgraph, LLC
  * ​
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ extra.apply {
     set("protobufVersion", "3.21.12")
     set("reactorGrpcVersion", "1.2.3")
     set("snakeyaml.version", "1.33") // Temporary fix for transient dependency security issue
-    set("testcontainersSpringBootVersion", "2.2.14")
+    set("testcontainersSpringBootVersion", "2.3.1")
 }
 
 // Creates a platform/BOM with specific versions so subprojects don't need to specify a version when using a dependency
@@ -48,7 +48,7 @@ dependencies {
         api("com.esaulpaugh:headlong:9.1.1")
         api("com.github.meanbeanlib:meanbean:3.0.0-M9")
         api("com.github.vertical-blank:sql-formatter:2.0.3")
-        api("com.google.cloud:spring-cloud-gcp-dependencies:3.4.2")
+        api("com.google.cloud:spring-cloud-gcp-dependencies:3.4.3")
         api("com.google.guava:guava:31.1-jre")
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.graphql-java-generator:graphql-java-client-dependencies:1.18.9")
@@ -65,7 +65,7 @@ dependencies {
         api("com.vladmihalcea:hibernate-types-55:2.21.1")
         api("commons-beanutils:commons-beanutils:1.9.4")
         api("commons-io:commons-io:2.11.0")
-        api("io.cucumber:cucumber-bom:7.11.0")
+        api("io.cucumber:cucumber-bom:7.11.1")
         api("io.github.mweirauch:micrometer-jvm-extras:0.2.2")
         api("io.grpc:grpc-bom:1.52.1")
         api("io.swagger:swagger-annotations:1.6.9")
@@ -86,8 +86,8 @@ dependencies {
         api("org.springdoc:springdoc-openapi-webflux-ui:1.6.14")
         api("org.springframework.cloud:spring-cloud-dependencies:2021.0.5")
         api("org.testcontainers:junit-jupiter:1.17.6")
-        api("software.amazon.awssdk:bom:2.19.21")
-        api("uk.org.webcompere:system-stubs-jupiter:2.0.1")
+        api("software.amazon.awssdk:bom:2.19.31")
+        api("uk.org.webcompere:system-stubs-jupiter:2.0.2")
     }
 }
 
