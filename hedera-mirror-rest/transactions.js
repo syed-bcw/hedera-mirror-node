@@ -130,8 +130,8 @@ const getSelectClauseWithTransfers = (includeExtraInfo, innerQuery, order = 'des
       select ${cryptoTransferJsonAgg} as ctr_list, ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)}
       from ${CryptoTransfer.tableName} ${CryptoTransfer.tableAlias}
       join tlist on ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} = tlist.consensus_timestamp
-      and ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} >= (select min(${Transaction.getFullName(Transaction.CONSENSUS_TIMESTAMP)}) from tlist)
-      and ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} <= (select max(${Transaction.getFullName(Transaction.CONSENSUS_TIMESTAMP)}) from tlist)
+      and ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} >= (select min(${Transaction.CONSENSUS_TIMESTAMP}) from tlist)
+      and ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} <= (select max(${Transaction.CONSENSUS_TIMESTAMP}) from tlist)
       and ${CryptoTransfer.getFullName(CryptoTransfer.PAYER_ACCOUNT_ID)} = tlist.payer_account_id
       group by ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)}
   )`;
