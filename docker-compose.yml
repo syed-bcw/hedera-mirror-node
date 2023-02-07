@@ -105,7 +105,7 @@ services:
     tty: true
 
   rest:
-    image: gcr.io/mirrornode/hedera-mirror-rest:0.75.0-SNAPSHOT
+    image: docker.io/jesseswirldslabs/hedera-mirror-rest:jesse-partition-local-SNAPSHOT
     pull_policy: always
     environment:
       HEDERA_MIRROR_REST_DB_HOST: db

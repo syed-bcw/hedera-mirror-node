@@ -130,6 +130,8 @@ const getSelectClauseWithTransfers = (includeExtraInfo, innerQuery, order = 'des
       select ${cryptoTransferJsonAgg} as ctr_list, ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)}
       from ${CryptoTransfer.tableName} ${CryptoTransfer.tableAlias}
       join tlist on ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} = tlist.consensus_timestamp
+      and ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} >= (select min(${Transaction.getFullName(Transaction.CONSENSUS_TIMESTAMP)}) from tlist)
+      and ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)} <= (select max(${Transaction.getFullName(Transaction.CONSENSUS_TIMESTAMP)}) from tlist)
       and ${CryptoTransfer.getFullName(CryptoTransfer.PAYER_ACCOUNT_ID)} = tlist.payer_account_id
       group by ${CryptoTransfer.getFullName(CryptoTransfer.CONSENSUS_TIMESTAMP)}
   )`;
@@ -706,19 +708,19 @@ const transactionByIdQuery = `
     (
       select ${tokenTransferJsonAgg}
       from ${TokenTransfer.tableName} ${TokenTransfer.tableAlias}
-      where ${TokenTransfer.getFullName(TokenTransfer.PAYER_ACCOUNT_ID)} = $1 and 
+      where ${TokenTransfer.getFullName(TokenTransfer.PAYER_ACCOUNT_ID)} = $1 and
             ${TokenTransfer.getFullName(TokenTransfer.CONSENSUS_TIMESTAMP)} = t.consensus_timestamp
     ) as token_transfer_list,
     (
       select ${nftTransferJsonAgg}
       from ${NftTransfer.tableName} ${NftTransfer.tableAlias}
-      where ${NftTransfer.getFullName(NftTransfer.PAYER_ACCOUNT_ID)} = $1 and 
+      where ${NftTransfer.getFullName(NftTransfer.PAYER_ACCOUNT_ID)} = $1 and
             ${NftTransfer.getFullName(NftTransfer.CONSENSUS_TIMESTAMP)} = t.consensus_timestamp
     ) as nft_transfer_list,
     (
       select ${assessedCustomFeeJsonAgg}
       from ${AssessedCustomFee.tableName} ${AssessedCustomFee.tableAlias}
-      where ${AssessedCustomFee.getFullName(AssessedCustomFee.PAYER_ACCOUNT_ID)} = $1 and 
+      where ${AssessedCustomFee.getFullName(AssessedCustomFee.PAYER_ACCOUNT_ID)} = $1 and
             ${AssessedCustomFee.getFullName(AssessedCustomFee.CONSENSUS_TIMESTAMP)} = t.consensus_timestamp
     ) as assessed_custom_fees
   from ${Transaction.tableName} ${Transaction.tableAlias}`;
