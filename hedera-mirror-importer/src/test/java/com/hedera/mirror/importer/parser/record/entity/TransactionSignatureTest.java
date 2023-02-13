@@ -32,6 +32,9 @@ import static org.mockito.Mockito.verify;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
+
+import com.hedera.mirror.importer.domain.SynthEventService;
+
 import com.hederahashgraph.api.proto.java.ResponseCodeEnum;
 import com.hederahashgraph.api.proto.java.SignatureMap;
 import com.hederahashgraph.api.proto.java.SignaturePair;
@@ -102,6 +105,8 @@ class TransactionSignatureTest {
 
     @Mock
     private FileDataRepository fileDataRepository;
+    @Mock
+    private SynthEventService synthEventService;
 
     private SignatureMap.Builder defaultSignatureMap;
 
@@ -124,7 +129,7 @@ class TransactionSignatureTest {
         RecordParserProperties parserProperties = new RecordParserProperties();
         entityRecordItemListener = new EntityRecordItemListener(addressBookService, commonParserProperties,
                 contractResultService, entityIdService, entityListener, entityProperties, fileDataRepository,
-                nonFeeTransferExtractionStrategy, parserProperties, transactionHandlerFactory);
+                nonFeeTransferExtractionStrategy, parserProperties, transactionHandlerFactory, synthEventService);
         defaultSignatureMap = getDefaultSignatureMap();
         defaultTransactionSignatures = defaultSignatureMap.getSigPairList()
                 .stream()

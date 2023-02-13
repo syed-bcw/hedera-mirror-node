@@ -23,6 +23,9 @@ package com.hedera.mirror.importer.parser.record.entity;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.UnknownFieldSet;
+
+import com.hedera.mirror.importer.domain.SynthEventService;
+
 import com.hederahashgraph.api.proto.java.AccountAmount;
 import com.hederahashgraph.api.proto.java.ConsensusMessageChunkInfo;
 import com.hederahashgraph.api.proto.java.ConsensusSubmitMessageTransactionBody;
@@ -61,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.inject.Named;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -124,6 +128,7 @@ public class EntityRecordItemListener implements RecordItemListener {
     private final NonFeeTransferExtractionStrategy nonFeeTransfersExtractor;
     private final RecordParserProperties parserProperties;
     private final TransactionHandlerFactory transactionHandlerFactory;
+    private final SynthEventService synthEventService;
 
     @Override
     public void onItem(RecordItem recordItem) throws ImporterException {
@@ -479,10 +484,16 @@ public class EntityRecordItemListener implements RecordItemListener {
                     tokenId,
                     recordItem.getTransactionRecord().getReceipt().getNewTotalSupply(),
                     consensusTimestamp);
+            int serialNumbersCount = tokenBurnTransactionBody.getSerialNumbersCount();
+            for (int i = 0; i < serialNumbersCount; i++) {
+                long serialNumber = tokenBurnTransactionBody.getSerialNumbersList().get(i);
+                updateNftDeleteStatus(consensusTimestamp, serialNumber, tokenId);
+                synthEventService.processTokenBurn(recordItem, tokenId, serialNumber, i);
+            }
 
-            tokenBurnTransactionBody.getSerialNumbersList().forEach(serialNumber ->
-                    updateNftDeleteStatus(consensusTimestamp, serialNumber, tokenId)
-            );
+            if (serialNumbersCount <= 0) {
+                synthEventService.processTokenBurn(recordItem, tokenId, tokenBurnTransactionBody.getAmount(), 0);
+            }
         }
     }
 
@@ -644,13 +655,20 @@ public class EntityRecordItemListener implements RecordItemListener {
                     consensusTimestamp);
 
             List<Long> serialNumbers = recordItem.getTransactionRecord().getReceipt().getSerialNumbersList();
-            for (int i = 0; i < serialNumbers.size(); i++) {
-                Nft nft = new Nft(serialNumbers.get(i), tokenId);
+            int serialNumbersCount = serialNumbers.size();
+            for (int i = 0; i < serialNumbersCount; i++) {
+                long serialNumber = serialNumbers.get(i);
+                Nft nft = new Nft(serialNumber, tokenId);
                 nft.setCreatedTimestamp(consensusTimestamp);
                 nft.setDeleted(false);
                 nft.setMetadata(DomainUtils.toBytes(tokenMintTransactionBody.getMetadata(i)));
                 nft.setModifiedTimestamp(consensusTimestamp);
                 entityListener.onNft(nft);
+                synthEventService.processTokenMint(recordItem, tokenId, serialNumber, i);
+            }
+
+            if (serialNumbersCount <= 0) {
+                synthEventService.processTokenMint(recordItem, tokenId, tokenMintTransactionBody.getAmount(), 0);
             }
         }
     }
@@ -726,9 +744,17 @@ public class EntityRecordItemListener implements RecordItemListener {
         return null;
     }
 
-    private void insertFungibleTokenTransfers(
-            long consensusTimestamp, TransactionBody body, boolean isTokenDissociate,
-            TokenID tokenId, EntityId entityTokenId, EntityId payerAccountId, List<AccountAmount> tokenTransfers) {
+    private int insertFungibleTokenTransfers(
+            RecordItem recordItem, TokenID tokenId, EntityId entityTokenId,
+            EntityId payerAccountId, List<AccountAmount> tokenTransfers, int logIndex) {
+        long consensusTimestamp = recordItem.getConsensusTimestamp();
+        TransactionBody body = recordItem.getTransactionBody();
+        boolean isTokenDissociate = body.hasTokenDissociate();
+        Predicate<AccountAmount> byNegativeAmount = amount -> amount.getAmount() < 0;
+        List<AccountAmount> negativeAccountAmounts = tokenTransfers.stream().filter(byNegativeAmount)
+                .collect(Collectors.toList());
+        boolean logEvents = tokenTransfers.size() > 1 && negativeAccountAmounts.size() == 1;
+
         for (AccountAmount accountAmount : tokenTransfers) {
             EntityId accountId = EntityId.of(accountAmount.getAccountID());
             long amount = accountAmount.getAmount();
@@ -773,38 +799,48 @@ public class EntityRecordItemListener implements RecordItemListener {
                 token.setTotalSupply(accountAmount.getAmount());
                 entityListener.onToken(token);
             }
+            if (logEvents && amount > 0) {
+                EntityId senderId = EntityId.of(negativeAccountAmounts.get(0).getAccountID());
+                EntityId receiverId = EntityId.of(accountAmount.getAccountID());
+
+                synthEventService.processTokenTransfer(recordItem, payerAccountId, senderId, receiverId, tokenId, amount, logIndex);
+                logIndex++;
+            }
         }
+        return logIndex;
     }
 
     private void insertTokenTransfers(RecordItem recordItem) {
         if (!entityProperties.getPersist().isTokens()) {
             return;
         }
+        int logIndex = 0;
 
-        long consensusTimestamp = recordItem.getConsensusTimestamp();
-        TransactionBody body = recordItem.getTransactionBody();
-        boolean isTokenDissociate = body.hasTokenDissociate();
-
-        recordItem.getTransactionRecord().getTokenTransferListsList().forEach(tokenTransferList -> {
+        for (int i = 0; i < recordItem.getTransactionRecord().getTokenTransferListsCount(); i++) {
+            TokenTransferList tokenTransferList = recordItem.getTransactionRecord().getTokenTransferLists(i);
             TokenID tokenId = tokenTransferList.getToken();
             EntityId entityTokenId = EntityId.of(tokenId);
             EntityId payerAccountId = recordItem.getPayerAccountId();
 
-            insertFungibleTokenTransfers(
-                    consensusTimestamp, body, isTokenDissociate,
+            logIndex = insertFungibleTokenTransfers(
+                    recordItem,
                     tokenId, entityTokenId, payerAccountId,
-                    tokenTransferList.getTransfersList());
+                    tokenTransferList.getTransfersList(),
+                    logIndex);
 
-            insertNonFungibleTokenTransfers(
-                    consensusTimestamp, body, tokenId, entityTokenId,
-                    payerAccountId, tokenTransferList.getNftTransfersList());
-        });
+            logIndex = insertNonFungibleTokenTransfers(
+                    recordItem, tokenId, entityTokenId,
+                    payerAccountId, tokenTransferList.getNftTransfersList(),
+                    logIndex);
+        }
     }
 
-    private void insertNonFungibleTokenTransfers(
-            long consensusTimestamp, TransactionBody body, TokenID tokenId,
-            EntityId entityTokenId, EntityId payerAccountId,
-            List<com.hederahashgraph.api.proto.java.NftTransfer> nftTransfersList) {
+    private int insertNonFungibleTokenTransfers(
+            RecordItem recordItem, TokenID tokenId, EntityId entityTokenId, EntityId payerAccountId,
+            List<com.hederahashgraph.api.proto.java.NftTransfer> nftTransfersList,
+            int logIndex) {
+        long consensusTimestamp = recordItem.getConsensusTimestamp();
+        TransactionBody body = recordItem.getTransactionBody();
         for (NftTransfer nftTransfer : nftTransfersList) {
             long serialNumber = nftTransfer.getSerialNumber();
             EntityId receiverId = EntityId.of(nftTransfer.getReceiverAccountID());
@@ -826,7 +862,11 @@ public class EntityRecordItemListener implements RecordItemListener {
             if (!EntityId.isEmpty(receiverId)) {
                 transferNftOwnership(consensusTimestamp, serialNumber, entityTokenId, receiverId);
             }
+            synthEventService.processTokenTransfer(recordItem, payerAccountId, senderId, receiverId, tokenId,
+                    serialNumber, logIndex);
+            logIndex++;
         }
+        return logIndex;
     }
 
     private void insertAutomaticTokenAssociations(RecordItem recordItem) {
@@ -933,9 +973,16 @@ public class EntityRecordItemListener implements RecordItemListener {
                     tokenId,
                     recordItem.getTransactionRecord().getReceipt().getNewTotalSupply(),
                     consensusTimestamp);
+            int serialNumberCount = tokenWipeAccountTransactionBody.getSerialNumbersCount();
+            for (int i = 0; i < serialNumberCount; i++) {
+                long serialNumber = tokenWipeAccountTransactionBody.getSerialNumbersList().get(i);
+                updateNftDeleteStatus(consensusTimestamp, serialNumber, tokenId);
+                synthEventService.processTokenWipe(recordItem, tokenId, serialNumber, i);
+            }
 
-            tokenWipeAccountTransactionBody.getSerialNumbersList().forEach(serialNumber ->
-                    updateNftDeleteStatus(consensusTimestamp, serialNumber, tokenId));
+            if (serialNumberCount <= 0) {
+                synthEventService.processTokenWipe(recordItem, tokenId, tokenWipeAccountTransactionBody.getAmount(), 0);
+            }
         }
     }
 
