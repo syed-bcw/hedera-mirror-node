@@ -491,6 +491,7 @@ public class EntityRecordItemListener implements RecordItemListener {
                 synthEventService.processTokenBurn(recordItem, tokenId, serialNumber, i);
             }
 
+            //if serial number count is zero, that means that we are burning fungible tokens
             if (serialNumbersCount <= 0) {
                 synthEventService.processTokenBurn(recordItem, tokenId, tokenBurnTransactionBody.getAmount(), 0);
             }

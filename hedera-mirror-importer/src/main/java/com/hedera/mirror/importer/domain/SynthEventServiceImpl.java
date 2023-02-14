@@ -30,6 +30,7 @@ import com.hedera.mirror.importer.parser.record.entity.EntityListener;
 import com.hederahashgraph.api.proto.java.TokenID;
 import com.hederahashgraph.api.proto.java.TokenWipeAccountTransactionBody;
 import com.hederahashgraph.api.proto.java.TransactionBody;
+import com.hedera.mirror.importer.util.Utility;
 
 @Named
 @RequiredArgsConstructor
@@ -49,10 +50,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         if (isContract(recordItem)) {
             return;
         }
-        byte[] data = hexToByte(padLeftZeros(Long.toHexString(amount)));
-        byte[] topic0 = hexToByte(approvalSignature);
-        byte[] topic1 = hexToByte(padLeftZeros(Long.toHexString(ownerId)));
-        byte[] topic2 = hexToByte(padLeftZeros(Long.toHexString(spenderId)));
+        byte[] data = Utility.hexToByte(Long.toHexString(amount));
+        byte[] topic0 = Utility.hexToByte(approvalSignature);
+        byte[] topic1 = Utility.hexToByte(Long.toHexString(ownerId));
+        byte[] topic2 = Utility.hexToByte(Long.toHexString(spenderId));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
         EntityId payerAccountId = recordItem.getPayerAccountId();
 
@@ -65,10 +66,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         if (isContract(recordItem)) {
             return;
         }
-        byte[] data = hexToByte(padLeftZeros(Integer.toHexString(approved)));
-        byte[] topic0 = hexToByte(approveForAllSignature);
-        byte[] topic1 = hexToByte(padLeftZeros(Long.toHexString(ownerId)));
-        byte[] topic2 = hexToByte(padLeftZeros(Long.toHexString(spenderId)));
+        byte[] data = Utility.hexToByte(Integer.toHexString(approved));
+        byte[] topic0 = Utility.hexToByte(approveForAllSignature);
+        byte[] topic1 = Utility.hexToByte(Long.toHexString(ownerId));
+        byte[] topic2 = Utility.hexToByte(Long.toHexString(spenderId));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
         EntityId payerAccountId = recordItem.getPayerAccountId();
 
@@ -84,10 +85,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         String amountHex = Long.toHexString(amount);
         String accountId = recordItem.getPayerAccountId().getId().toString();
 
-        byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSignature);
-        byte[] topic1 = hexToByte(padLeftZeros("0"));
-        byte[] topic2 = hexToByte(padLeftZeros(accountId));
+        byte[] data = Utility.hexToByte(amountHex);
+        byte[] topic0 = Utility.hexToByte(transferSignature);
+        byte[] topic1 = Utility.hexToByte("0");
+        byte[] topic2 = Utility.hexToByte(accountId);
         long consensusTimestamp = recordItem.getConsensusTimestamp();
         EntityId payerAccountId = recordItem.getPayerAccountId();
 
@@ -106,10 +107,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         String accountHex = Long.toHexString(accountNum);
         String amountHex = Long.toHexString(amount);
 
-        byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSignature);
-        byte[] topic1 = hexToByte(padLeftZeros(accountHex));
-        byte[] topic2 = hexToByte(padLeftZeros("0"));
+        byte[] data = Utility.hexToByte(amountHex);
+        byte[] topic0 = Utility.hexToByte(transferSignature);
+        byte[] topic1 = Utility.hexToByte(accountHex);
+        byte[] topic2 = Utility.hexToByte("0");
         long consensusTimestamp = recordItem.getConsensusTimestamp();
         EntityId payerAccountId = recordItem.getPayerAccountId();
 
@@ -125,10 +126,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         String amountHex = Long.toHexString(amount);
         String accountId = recordItem.getPayerAccountId().getId().toString();
 
-        byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSignature);
-        byte[] topic1 = hexToByte(padLeftZeros(accountId));
-        byte[] topic2 = hexToByte(padLeftZeros("0"));
+        byte[] data = Utility.hexToByte(amountHex);
+        byte[] topic0 = Utility.hexToByte(transferSignature);
+        byte[] topic1 = Utility.hexToByte(accountId);
+        byte[] topic2 = Utility.hexToByte("0");
         long consensusTimestamp = recordItem.getConsensusTimestamp();
         EntityId payerAccountId = recordItem.getPayerAccountId();
 
@@ -148,10 +149,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         String senderIdHex = Long.toHexString(senderId.getId());
         String receiverIdHex = Long.toHexString(receiverId.getId());
 
-        byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSignature);
-        byte[] topic1 = hexToByte(padLeftZeros(senderIdHex));
-        byte[] topic2 = hexToByte(padLeftZeros(receiverIdHex));
+        byte[] data = Utility.hexToByte(amountHex);
+        byte[] topic0 = Utility.hexToByte(transferSignature);
+        byte[] topic1 = Utility.hexToByte(senderIdHex);
+        byte[] topic2 = Utility.hexToByte(receiverIdHex);
 
         EntityId token = EntityId.of(tokenId);
         long consensusTimestamp = recordItem.getConsensusTimestamp();
@@ -179,34 +180,5 @@ public class SynthEventServiceImpl implements SynthEventService {
 
     private boolean isContract(RecordItem recordItem) {
         return recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
-    }
-
-    private byte[] hexToByte(String hex) {
-        // Initializing the hex string and byte array
-        byte[] ans = new byte[hex.length() / 2];
-
-        for (int i = 0; i < ans.length; i++) {
-            int index = i * 2;
-
-            // Using parseInt() method of Integer class
-            int val = Integer.parseInt(hex.substring(index, index + 2), 16);
-            ans[i] = (byte) val;
-        }
-
-        return ans;
-    }
-
-    private String padLeftZeros(String inputString) {
-        int length = 64;
-        if (inputString.length() >= length) {
-            return inputString;
-        }
-        StringBuilder sb = new StringBuilder();
-        while (sb.length() < length - inputString.length()) {
-            sb.append('0');
-        }
-        sb.append(inputString);
-
-        return sb.toString();
     }
 }

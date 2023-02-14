@@ -217,4 +217,36 @@ public class Utility {
         System.arraycopy(keyHash, 12, address, 0, 20);
         return address;
     }
+
+    public static byte[] hexToByte(String input) {
+        int length = 64;
+        String hex = input;
+        if (input.length() < length) {
+            hex = padLeftZeros(input);
+        }
+        // Initializing the hex string and byte array
+        byte[] ans = new byte[hex.length() / 2];
+
+        for (int i = 0; i < ans.length; i++) {
+            int index = i * 2;
+
+            // Using parseInt() method of Integer class
+            int val = Integer.parseInt(hex.substring(index, index + 2), 16);
+            ans[i] = (byte) val;
+        }
+
+        return ans;
+    }
+
+    private static String padLeftZeros(String inputString) {
+        int length = 64;
+
+        StringBuilder sb = new StringBuilder();
+        while (sb.length() < length - inputString.length()) {
+            sb.append('0');
+        }
+        sb.append(inputString);
+
+        return sb.toString();
+    }
 }
