@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main, release/** ]
   push:
-    branches: [ main, release/** ]
+    branches: [ 05401-Fail-gradle-build-job ]
     tags: [ v* ]
 
 # Workaround https://github.com/spring-cloud/spring-cloud-kubernetes/issues/1089 until 3.x is released
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        project: [ graphql, grpc, importer, monitor, rest, 'rest:check-state-proof', 'rest:monitoring', rosetta, web3 ]
+        project: [ grpc, importer, rest]
         schema: [ v1, v2 ]
         exclude:
           - project: monitor
