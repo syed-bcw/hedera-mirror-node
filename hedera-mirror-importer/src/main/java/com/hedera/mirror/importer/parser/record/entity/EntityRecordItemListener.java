@@ -751,8 +751,7 @@ public class EntityRecordItemListener implements RecordItemListener {
         TransactionBody body = recordItem.getTransactionBody();
         boolean isTokenDissociate = body.hasTokenDissociate();
         Predicate<AccountAmount> byNegativeAmount = amount -> amount.getAmount() < 0;
-        List<AccountAmount> negativeAccountAmounts = tokenTransfers.stream().filter(byNegativeAmount)
-                .collect(Collectors.toList());
+        List<AccountAmount> negativeAccountAmounts = tokenTransfers.stream().filter(byNegativeAmount).toList();
         boolean logEvents = tokenTransfers.size() > 1 && negativeAccountAmounts.size() == 1;
 
         for (AccountAmount accountAmount : tokenTransfers) {

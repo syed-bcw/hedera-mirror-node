@@ -37,21 +37,20 @@ public class SynthEventServiceImpl implements SynthEventService {
 
     private final EntityListener entityListener;
 
-    private final String transferSigniture = "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-    private final String approvalSigniture = "8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925";
-    private final String approvaForAllSigniture = "17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31";
+    private final static String transferSignature = "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+    private final static String approvalSignature = "8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925";
+    private final static String approveForAllSignature = "17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31";
 
     private final byte[] bloom = { 0 };
 
     @Override
     public void processApproveAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
                                         long amount, int logIndex) {
-        boolean isContract = recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
-        if (isContract) {
+        if (isContract(recordItem)) {
             return;
         }
         byte[] data = hexToByte(padLeftZeros(Long.toHexString(amount)));
-        byte[] topic0 = hexToByte(approvalSigniture);
+        byte[] topic0 = hexToByte(approvalSignature);
         byte[] topic1 = hexToByte(padLeftZeros(Long.toHexString(ownerId)));
         byte[] topic2 = hexToByte(padLeftZeros(Long.toHexString(spenderId)));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
@@ -63,12 +62,11 @@ public class SynthEventServiceImpl implements SynthEventService {
     @Override
     public void processApproveForAllAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
                                               int approved, int logIndex) {
-        boolean isContract = recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
-        if (isContract) {
+        if (isContract(recordItem)) {
             return;
         }
         byte[] data = hexToByte(padLeftZeros(Integer.toHexString(approved)));
-        byte[] topic0 = hexToByte(approvaForAllSigniture);
+        byte[] topic0 = hexToByte(approveForAllSignature);
         byte[] topic1 = hexToByte(padLeftZeros(Long.toHexString(ownerId)));
         byte[] topic2 = hexToByte(padLeftZeros(Long.toHexString(spenderId)));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
@@ -79,8 +77,7 @@ public class SynthEventServiceImpl implements SynthEventService {
 
     @Override
     public void processTokenMint(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
-        boolean isContract = recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
-        if (isContract) {
+        if (isContract(recordItem)) {
             return;
         }
 
@@ -88,7 +85,7 @@ public class SynthEventServiceImpl implements SynthEventService {
         String accountId = recordItem.getPayerAccountId().getId().toString();
 
         byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSigniture);
+        byte[] topic0 = hexToByte(transferSignature);
         byte[] topic1 = hexToByte(padLeftZeros("0"));
         byte[] topic2 = hexToByte(padLeftZeros(accountId));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
@@ -99,8 +96,7 @@ public class SynthEventServiceImpl implements SynthEventService {
 
     @Override
     public void processTokenWipe(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
-        boolean isContract = recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
-        if (isContract) {
+        if (isContract(recordItem)) {
             return;
         }
         TokenWipeAccountTransactionBody tokenWipeAccountTransactionBody = recordItem.getTransactionBody()
@@ -111,7 +107,7 @@ public class SynthEventServiceImpl implements SynthEventService {
         String amountHex = Long.toHexString(amount);
 
         byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSigniture);
+        byte[] topic0 = hexToByte(transferSignature);
         byte[] topic1 = hexToByte(padLeftZeros(accountHex));
         byte[] topic2 = hexToByte(padLeftZeros("0"));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
@@ -122,8 +118,7 @@ public class SynthEventServiceImpl implements SynthEventService {
 
     @Override
     public void processTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
-        boolean isContract = recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
-        if (isContract) {
+        if (isContract(recordItem)) {
             return;
         }
 
@@ -131,7 +126,7 @@ public class SynthEventServiceImpl implements SynthEventService {
         String accountId = recordItem.getPayerAccountId().getId().toString();
 
         byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSigniture);
+        byte[] topic0 = hexToByte(transferSignature);
         byte[] topic1 = hexToByte(padLeftZeros(accountId));
         byte[] topic2 = hexToByte(padLeftZeros("0"));
         long consensusTimestamp = recordItem.getConsensusTimestamp();
@@ -144,9 +139,8 @@ public class SynthEventServiceImpl implements SynthEventService {
     public void processTokenTransfer(RecordItem recordItem, EntityId payerAccountId, EntityId senderId,
                                      EntityId receiverId, TokenID tokenId, long amount, int logIndex) {
         TransactionBody body = recordItem.getTransactionBody();
-        boolean isContract = recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
         boolean isMintWipeBurn = body.hasTokenMint() || body.hasTokenWipe() || body.hasTokenBurn();
-        if (senderId.getId() == 0 || isMintWipeBurn || isContract) {
+        if (senderId.getId() == 0 || isMintWipeBurn || isContract(recordItem)) {
             return;
         }
 
@@ -155,7 +149,7 @@ public class SynthEventServiceImpl implements SynthEventService {
         String receiverIdHex = Long.toHexString(receiverId.getId());
 
         byte[] data = hexToByte(padLeftZeros(amountHex));
-        byte[] topic0 = hexToByte(transferSigniture);
+        byte[] topic0 = hexToByte(transferSignature);
         byte[] topic1 = hexToByte(padLeftZeros(senderIdHex));
         byte[] topic2 = hexToByte(padLeftZeros(receiverIdHex));
 
@@ -181,6 +175,10 @@ public class SynthEventServiceImpl implements SynthEventService {
         contractLog.setTopic2(topic2);
 
         entityListener.onContractLog(contractLog);
+    }
+
+    private boolean isContract(RecordItem recordItem) {
+        return recordItem.getTransactionRecord().hasContractCallResult() || recordItem.getTransactionRecord().hasContractCreateResult();
     }
 
     private byte[] hexToByte(String hex) {

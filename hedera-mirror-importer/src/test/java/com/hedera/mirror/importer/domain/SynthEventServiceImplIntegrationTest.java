@@ -109,7 +109,7 @@ import static org.assertj.core.api.Assertions.from;
 import static org.junit.jupiter.api.Assertions.*;
 
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-public class SynthEventServiceImplIntegrationTest extends AbstractEntityRecordItemListenerTest {
+class SynthEventServiceImplIntegrationTest extends AbstractEntityRecordItemListenerTest {
     private static final long ASSOCIATE_TIMESTAMP = 5L;
     private static final long AUTO_RENEW_PERIOD = 30L;
     private static final long CREATE_TIMESTAMP = 1L;
