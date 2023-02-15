@@ -803,7 +803,7 @@ public class EntityRecordItemListener implements RecordItemListener {
                 EntityId senderId = EntityId.of(negativeAccountAmounts.get(0).getAccountID());
                 EntityId receiverId = EntityId.of(accountAmount.getAccountID());
 
-                synthEventService.processTokenTransfer(recordItem, payerAccountId, senderId, receiverId, tokenId, amount, logIndex);
+                synthEventService.processTokenTransfer(recordItem, senderId, receiverId, tokenId, amount, logIndex);
                 logIndex++;
             }
         }
@@ -862,8 +862,7 @@ public class EntityRecordItemListener implements RecordItemListener {
             if (!EntityId.isEmpty(receiverId)) {
                 transferNftOwnership(consensusTimestamp, serialNumber, entityTokenId, receiverId);
             }
-            synthEventService.processTokenTransfer(recordItem, payerAccountId, senderId, receiverId, tokenId,
-                    serialNumber, logIndex);
+            synthEventService.processTokenTransfer(recordItem, senderId, receiverId, tokenId, serialNumber, logIndex);
             logIndex++;
         }
         return logIndex;

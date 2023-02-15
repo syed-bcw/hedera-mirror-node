@@ -42,6 +42,6 @@ public interface SynthEventService {
 
     void processTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
 
-    void processTokenTransfer(RecordItem recordItem, EntityId payerAccountId, EntityId senderId,
-                              EntityId receiverId, TokenID tokenId, long amount, int logIndex);
+    void processTokenTransfer(RecordItem recordItem, EntityId senderId, EntityId receiverId,
+                              TokenID tokenId, long amount, int logIndex);
 }

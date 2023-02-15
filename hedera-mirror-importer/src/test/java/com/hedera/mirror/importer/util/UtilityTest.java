@@ -120,6 +120,22 @@ public class UtilityTest {
         );
     }
 
+    @Test
+    void hexToByte() {
+        String address1 = "123456";
+        String address2 = "12345000000000006";
+        String address3 = "8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925";
+        String address4 = "6485088Feb37215F2bbB8d92F35B0969594A309B";
+        String wrongAddress = "latest";
+
+        assertThat(Utility.hexToByte(address1)).isEqualTo(new byte [] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 52, 86});
+        assertThat(Utility.hexToByte(address2)).isEqualTo(new byte [] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 35, 69, 0, 0, 0, 0, 0, 6});
+        assertThat(Utility.hexToByte(address3)).isEqualTo(new byte [] { -116, 91, -31, -27, -21, -20, 125, 91, -47, 79, 113, 66, 125, 30, -124, -13, -35, 3, 20, -64, -9, -78, 41, 30, 91, 32, 10, -56, -57, -61, -71, 37});
+        assertThat(Utility.hexToByte(address4)).isEqualTo(new byte [] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, -123, 8, -113, -21, 55, 33, 95, 43, -69, -115, -110, -13, 91, 9, 105, 89, 74, 48, -101});
+        assertThatThrownBy(() -> Utility.hexToByte(wrongAddress))
+                .isInstanceOf(NumberFormatException.class);
+    }
+
     @ParameterizedTest(name = "with seconds {0} and nanos {1}")
     @CsvSource({
             "1569936354, 901",
