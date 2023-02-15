@@ -610,7 +610,7 @@ class EntityRecordItemListenerFileTest extends AbstractEntityRecordItemListenerT
                         .isEqualTo(DomainUtils.timeStampInNanos(record.getConsensusTimestamp()) + 1),
                 () -> assertThat(currentAddressBook.getEntries()).hasSize(4),
                 () -> assertEquals(2, addressBookRepository.count()),
-                () -> assertEquals(TEST_INITIAL_ADDRESS_BOOK_NODE_COUNT + 5, addressBookEntryRepository.count()),
+                () -> assertEquals(TEST_INITIAL_ADDRESS_BOOK_NODE_COUNT + 4, addressBookEntryRepository.count()),
                 () -> assertEquals(1, fileDataRepository.count())
         );
     }
