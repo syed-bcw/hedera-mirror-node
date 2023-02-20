@@ -70,7 +70,7 @@ class CryptoDeleteAllowanceTransactionHandler implements TransactionHandler {
                 nft.setModifiedTimestamp(recordItem.getConsensusTimestamp());
                 entityListener.onNft(nft);
             }
-            synthEventService.processApproveForAllAllowance(recordItem, ownerId.getId(), 0, tokenId, 0, i);
+            synthEventService.createSyntheticApproveForAllAllowance(recordItem, ownerId.getId(), 0, tokenId, 0, i);
         }
     }
 }

@@ -149,7 +149,7 @@ class CryptoApproveAllowanceTransactionHandler implements TransactionHandler {
                 if (nftAllowanceState.putIfAbsent(nftAllowance.getId(), nftAllowance) == null) {
                     entityListener.onNftAllowance(nftAllowance);
                 }
-                synthEventService.processApproveForAllAllowance(recordItem, ownerAccountId.getId(), spender.getId(), tokenId, 1, logIndex);
+                synthEventService.createSyntheticApproveForAllAllowance(recordItem, ownerAccountId.getId(), spender.getId(), tokenId, 1, logIndex);
                 logIndex++;
             }
 
@@ -167,7 +167,7 @@ class CryptoApproveAllowanceTransactionHandler implements TransactionHandler {
                     entityListener.onNft(nft);
                 }
                 if (!hasApprovedForAll) {
-                    synthEventService.processApproveAllowance(recordItem, ownerAccountId.getId(), spender.getId(), tokenId, serialNumber, logIndex);
+                    synthEventService.createSyntheticApproveAllowance(recordItem, ownerAccountId.getId(), spender.getId(), tokenId, serialNumber, logIndex);
                     logIndex++;
                 }
             }
@@ -206,7 +206,7 @@ class CryptoApproveAllowanceTransactionHandler implements TransactionHandler {
             if (tokenAllowanceState.putIfAbsent(tokenAllowance.getId(), tokenAllowance) == null) {
                 entityListener.onTokenAllowance(tokenAllowance);
             }
-            synthEventService.processApproveAllowance(recordItem, ownerAccountId.getId(), spenderId, tokenId, tokenApproval.getAmount(), logIndex);
+            synthEventService.createSyntheticApproveAllowance(recordItem, ownerAccountId.getId(), spenderId, tokenId, tokenApproval.getAmount(), logIndex);
             logIndex++;
         }
     }

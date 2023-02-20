@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.HexFormat;
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.codec.binary.Hex;
@@ -224,18 +225,7 @@ public class Utility {
         if (input.length() < length) {
             hex = padLeftZeros(input);
         }
-        // Initializing the hex string and byte array
-        byte[] ans = new byte[hex.length() / 2];
-
-        for (int i = 0; i < ans.length; i++) {
-            int index = i * 2;
-
-            // Using parseInt() method of Integer class
-            int val = Integer.parseInt(hex.substring(index, index + 2), 16);
-            ans[i] = (byte) val;
-        }
-
-        return ans;
+        return HexFormat.of().parseHex(hex);
     }
 
     private static String padLeftZeros(String inputString) {

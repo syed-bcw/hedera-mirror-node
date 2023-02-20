@@ -485,15 +485,16 @@ public class EntityRecordItemListener implements RecordItemListener {
                     recordItem.getTransactionRecord().getReceipt().getNewTotalSupply(),
                     consensusTimestamp);
             int serialNumbersCount = tokenBurnTransactionBody.getSerialNumbersCount();
+
+            if (isBurningFungible(serialNumbersCount)) {
+                synthEventService.createSyntheticFungibleTokenBurn(recordItem, tokenId, tokenBurnTransactionBody.getAmount(), 0);
+                return;
+            }
+
             for (int i = 0; i < serialNumbersCount; i++) {
                 long serialNumber = tokenBurnTransactionBody.getSerialNumbersList().get(i);
                 updateNftDeleteStatus(consensusTimestamp, serialNumber, tokenId);
-                synthEventService.processTokenBurn(recordItem, tokenId, serialNumber, i);
-            }
-
-            //if serial number count is zero, that means that we are burning fungible tokens
-            if (serialNumbersCount <= 0) {
-                synthEventService.processTokenBurn(recordItem, tokenId, tokenBurnTransactionBody.getAmount(), 0);
+                synthEventService.createSyntheticNonFungibleTokenBurn(recordItem, tokenId, serialNumber, i);
             }
         }
     }
@@ -657,6 +658,12 @@ public class EntityRecordItemListener implements RecordItemListener {
 
             List<Long> serialNumbers = recordItem.getTransactionRecord().getReceipt().getSerialNumbersList();
             int serialNumbersCount = serialNumbers.size();
+
+            if (isBurningFungible(serialNumbersCount)) {
+                synthEventService.createSyntheticFungibleTokenMint(recordItem, tokenId, tokenMintTransactionBody.getAmount(), 0);
+                return;
+            }
+
             for (int i = 0; i < serialNumbersCount; i++) {
                 long serialNumber = serialNumbers.get(i);
                 Nft nft = new Nft(serialNumber, tokenId);
@@ -665,11 +672,7 @@ public class EntityRecordItemListener implements RecordItemListener {
                 nft.setMetadata(DomainUtils.toBytes(tokenMintTransactionBody.getMetadata(i)));
                 nft.setModifiedTimestamp(consensusTimestamp);
                 entityListener.onNft(nft);
-                synthEventService.processTokenMint(recordItem, tokenId, serialNumber, i);
-            }
-
-            if (serialNumbersCount <= 0) {
-                synthEventService.processTokenMint(recordItem, tokenId, tokenMintTransactionBody.getAmount(), 0);
+                synthEventService.createSyntheticNonFungibleTokenMint(recordItem, tokenId, serialNumber, i);
             }
         }
     }
@@ -751,8 +754,7 @@ public class EntityRecordItemListener implements RecordItemListener {
         long consensusTimestamp = recordItem.getConsensusTimestamp();
         TransactionBody body = recordItem.getTransactionBody();
         boolean isTokenDissociate = body.hasTokenDissociate();
-        Predicate<AccountAmount> byNegativeAmount = amount -> amount.getAmount() < 0;
-        List<AccountAmount> negativeAccountAmounts = tokenTransfers.stream().filter(byNegativeAmount).toList();
+        List<AccountAmount> negativeAccountAmounts = tokenTransfers.stream().filter(amount -> amount.getAmount() < 0).toList();
         boolean logEvents = tokenTransfers.size() > 1 && negativeAccountAmounts.size() == 1;
 
         for (AccountAmount accountAmount : tokenTransfers) {
@@ -803,7 +805,7 @@ public class EntityRecordItemListener implements RecordItemListener {
                 EntityId senderId = EntityId.of(negativeAccountAmounts.get(0).getAccountID());
                 EntityId receiverId = EntityId.of(accountAmount.getAccountID());
 
-                synthEventService.processTokenTransfer(recordItem, senderId, receiverId, tokenId, amount, logIndex);
+                synthEventService.createSyntheticTokenTransfer(recordItem, senderId, receiverId, tokenId, amount, logIndex);
                 logIndex++;
             }
         }
@@ -862,7 +864,7 @@ public class EntityRecordItemListener implements RecordItemListener {
             if (!EntityId.isEmpty(receiverId)) {
                 transferNftOwnership(consensusTimestamp, serialNumber, entityTokenId, receiverId);
             }
-            synthEventService.processTokenTransfer(recordItem, senderId, receiverId, tokenId, serialNumber, logIndex);
+            synthEventService.createSyntheticTokenTransfer(recordItem, senderId, receiverId, tokenId, serialNumber, logIndex);
             logIndex++;
         }
         return logIndex;
@@ -973,14 +975,15 @@ public class EntityRecordItemListener implements RecordItemListener {
                     recordItem.getTransactionRecord().getReceipt().getNewTotalSupply(),
                     consensusTimestamp);
             int serialNumberCount = tokenWipeAccountTransactionBody.getSerialNumbersCount();
+            if (isBurningFungible(serialNumberCount)) {
+                synthEventService.createSyntheticFungibleTokenWipe(recordItem, tokenId, tokenWipeAccountTransactionBody.getAmount(), 0);
+                return;
+            }
+
             for (int i = 0; i < serialNumberCount; i++) {
                 long serialNumber = tokenWipeAccountTransactionBody.getSerialNumbersList().get(i);
                 updateNftDeleteStatus(consensusTimestamp, serialNumber, tokenId);
-                synthEventService.processTokenWipe(recordItem, tokenId, serialNumber, i);
-            }
-
-            if (serialNumberCount <= 0) {
-                synthEventService.processTokenWipe(recordItem, tokenId, tokenWipeAccountTransactionBody.getAmount(), 0);
+                synthEventService.createSyntheticNonFungibleTokenWipe(recordItem, tokenId, serialNumber, i);
             }
         }
     }
@@ -1270,5 +1273,10 @@ public class EntityRecordItemListener implements RecordItemListener {
 
         entities.remove(null);
         return new TransactionFilterFields(entities, TransactionType.of(recordItem.getTransactionType()));
+    }
+
+    private boolean isBurningFungible(int serialNumberCount) {
+        //if serial number count is zero, that means that we are burning fungible tokens
+        return serialNumberCount <= 0;
     }
 }

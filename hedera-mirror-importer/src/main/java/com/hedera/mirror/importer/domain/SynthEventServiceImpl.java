@@ -43,7 +43,7 @@ public class SynthEventServiceImpl implements SynthEventService {
     private static final String APPROVE_FOR_ALL_SIGNATURE = "17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31";
 
     @Override
-    public void processApproveAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
+    public void createSyntheticApproveAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
                                         long amount, int logIndex) {
         if (isContract(recordItem)) {
             return;
@@ -56,7 +56,7 @@ public class SynthEventServiceImpl implements SynthEventService {
     }
 
     @Override
-    public void processApproveForAllAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
+    public void createSyntheticApproveForAllAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
                                               int approved, int logIndex) {
         if (isContract(recordItem)) {
             return;
@@ -69,47 +69,8 @@ public class SynthEventServiceImpl implements SynthEventService {
     }
 
     @Override
-    public void processTokenMint(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
-        if (isContract(recordItem)) {
-            return;
-        }
-
-        String amountHex = Long.toHexString(amount);
-        String accountId = recordItem.getPayerAccountId().getId().toString();
-
-        processLog(recordItem, logIndex, tokenId, amountHex, TRANSFER_SIGNATURE, "0", accountId);
-    }
-
-    @Override
-    public void processTokenWipe(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
-        if (isContract(recordItem)) {
-            return;
-        }
-        TokenWipeAccountTransactionBody tokenWipeAccountTransactionBody = recordItem.getTransactionBody()
-                .getTokenWipe();
-        long accountNum = tokenWipeAccountTransactionBody.getAccount().getAccountNum();
-
-        String accountHex = Long.toHexString(accountNum);
-        String amountHex = Long.toHexString(amount);
-
-        processLog(recordItem, logIndex, tokenId, amountHex, TRANSFER_SIGNATURE, accountHex, "0");
-    }
-
-    @Override
-    public void processTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
-        if (isContract(recordItem)) {
-            return;
-        }
-
-        String amountHex = Long.toHexString(amount);
-        String accountId = recordItem.getPayerAccountId().getId().toString();
-
-        processLog(recordItem, logIndex, tokenId, amountHex, TRANSFER_SIGNATURE, accountId, "0");
-    }
-
-    @Override
-    public void processTokenTransfer(RecordItem recordItem, EntityId senderId, EntityId receiverId,
-                                     TokenID tokenId, long amount, int logIndex) {
+    public void createSyntheticTokenTransfer(RecordItem recordItem, EntityId senderId, EntityId receiverId,
+                                             TokenID tokenId, long amount, int logIndex) {
         TransactionBody body = recordItem.getTransactionBody();
         boolean isMintWipeBurn = body.hasTokenMint() || body.hasTokenWipe() || body.hasTokenBurn();
         if (senderId.getId() == 0 || isMintWipeBurn || isContract(recordItem)) {
@@ -122,6 +83,81 @@ public class SynthEventServiceImpl implements SynthEventService {
 
         EntityId token = EntityId.of(tokenId);
         processLog(recordItem, logIndex, token, amountHex, TRANSFER_SIGNATURE, senderIdHex, receiverIdHex);
+    }
+
+    @Override
+    public void createSyntheticFungibleTokenMint(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
+        if (isContract(recordItem)) {
+            return;
+        }
+        createSyntheticTokenMint(recordItem, tokenId, amount, logIndex);
+    }
+
+    @Override
+    public void createSyntheticNonFungibleTokenMint(RecordItem recordItem, EntityId tokenId, long serialNumber,
+                                                    int logIndex) {
+        if (isContract(recordItem)) {
+            return;
+        }
+        createSyntheticTokenMint(recordItem, tokenId, serialNumber, logIndex);
+    }
+
+    @Override
+    public void createSyntheticFungibleTokenWipe(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
+        if (isContract(recordItem)) {
+            return;
+        }
+        createSyntheticTokenWipe(recordItem, tokenId, amount, logIndex);
+    }
+
+    @Override
+    public void createSyntheticNonFungibleTokenWipe(RecordItem recordItem, EntityId tokenId, long serialNumber,
+                                                    int logIndex) {
+        if (isContract(recordItem)) {
+            return;
+        }
+        createSyntheticTokenWipe(recordItem, tokenId, serialNumber, logIndex);
+    }
+
+    @Override
+    public void createSyntheticFungibleTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
+        if (isContract(recordItem)) {
+            return;
+        }
+        createSyntheticTokenBurn(recordItem, tokenId, amount, logIndex);
+    }
+
+    @Override
+    public void createSyntheticNonFungibleTokenBurn(RecordItem recordItem, EntityId tokenId, long serialNumber, int logIndex) {
+        if (isContract(recordItem)) {
+            return;
+        }
+        createSyntheticTokenBurn(recordItem, tokenId, serialNumber, logIndex);
+    }
+
+    private void createSyntheticTokenMint(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
+        String amountHex = Long.toHexString(amount);
+        String accountId = recordItem.getPayerAccountId().getId().toString();
+
+        processLog(recordItem, logIndex, tokenId, amountHex, TRANSFER_SIGNATURE, "0", accountId);
+    }
+
+    private void createSyntheticTokenWipe(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
+        TokenWipeAccountTransactionBody tokenWipeAccountTransactionBody = recordItem.getTransactionBody()
+                .getTokenWipe();
+        long accountNum = tokenWipeAccountTransactionBody.getAccount().getAccountNum();
+
+        String accountHex = Long.toHexString(accountNum);
+        String amountHex = Long.toHexString(amount);
+
+        processLog(recordItem, logIndex, tokenId, amountHex, TRANSFER_SIGNATURE, accountHex, "0");
+    }
+
+    private void createSyntheticTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex) {
+        String amountHex = Long.toHexString(amount);
+        String accountId = recordItem.getPayerAccountId().getId().toString();
+
+        processLog(recordItem, logIndex, tokenId, amountHex, TRANSFER_SIGNATURE, accountId, "0");
     }
 
     private void processLog(RecordItem recordItem, int index, EntityId tokenId, String data, String topic0,

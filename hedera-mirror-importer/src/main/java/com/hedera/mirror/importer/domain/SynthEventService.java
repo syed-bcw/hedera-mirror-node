@@ -30,18 +30,18 @@ import com.hedera.mirror.common.domain.entity.EntityId;
  * synthetic events for HAPI token transactions
  */
 public interface SynthEventService {
-    void processApproveAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId, long amount,
+    void createSyntheticApproveAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId, long amount,
                                  int logIndex);
 
-    void processApproveForAllAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
+    void createSyntheticApproveForAllAllowance(RecordItem recordItem, long ownerId, long spenderId, EntityId tokenId,
                                        int approved, int logIndex);
 
-    void processTokenMint(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
-
-    void processTokenWipe(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
-
-    void processTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
-
-    void processTokenTransfer(RecordItem recordItem, EntityId senderId, EntityId receiverId,
+    void createSyntheticFungibleTokenMint(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
+    void createSyntheticNonFungibleTokenMint(RecordItem recordItem, EntityId tokenId, long serialNumber, int logIndex);
+    void createSyntheticFungibleTokenWipe(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
+    void createSyntheticNonFungibleTokenWipe(RecordItem recordItem, EntityId tokenId, long serialNumber, int logIndex);
+    void createSyntheticFungibleTokenBurn(RecordItem recordItem, EntityId tokenId, long amount, int logIndex);
+    void createSyntheticNonFungibleTokenBurn(RecordItem recordItem, EntityId tokenId, long serialNumber, int logIndex);
+    void createSyntheticTokenTransfer(RecordItem recordItem, EntityId senderId, EntityId receiverId,
                               TokenID tokenId, long amount, int logIndex);
 }
