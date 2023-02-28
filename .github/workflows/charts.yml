@@ -14,8 +14,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install ct
+        uses: helm/chart-testing-action@v2.3.1
+
       - name: Run lint
-        uses: quay.io/helmpack/chart-testing:v3.7.1
         run: ct lint --config .github/ct.yaml --all
 
       - name: Test
@@ -47,6 +49,8 @@ jobs:
         with:
           arguments: dockerPush -PdockerRegistry=localhost:5001/mirrornode -PdockerTag=test -Dorg.gradle.parallel=false
 
+      - name: Install ct
+        uses: helm/chart-testing-action@v2.3.1
+
       - name: Install chart
-        uses: quay.io/helmpack/chart-testing:v3.7.1
         run: ct install --config .github/ct.yaml --charts=charts/hedera-mirror --helm-extra-set-args="--set=global.image.registry=registry:5000 --set=global.image.tag=test"
