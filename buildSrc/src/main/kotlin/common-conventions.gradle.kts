@@ -47,9 +47,7 @@ val licenseHeader = """
     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     * See the License for the specific language governing permissions and
     * limitations under the License.
-    */
-
-
+    */${"\n\n"}
 """.trimIndent()
 val resources = rootDir.resolve("buildSrc").resolve("src").resolve("main").resolve("resources")
 
@@ -65,25 +63,26 @@ dependencyCheck {
 // Spotless uses Prettier and it requires Node.js
 node {
     download.set(true)
-    version.set("18.12.1")
+    version.set("18.14.2")
     workDir.set(rootDir.resolve(".gradle").resolve("nodejs"))
 }
 
 spotless {
-    val npmExec = when(System.getProperty("os.name").toLowerCase().contains("windows")) {
+    val npmExec = when (System.getProperty("os.name").toLowerCase().contains("windows")) {
         true -> Paths.get("npm.cmd")
         else -> Paths.get("bin", "npm")
     }
+    val npmSetup = tasks.named("npmSetup").get() as NpmSetupTask
 
-    isEnforceCheck = false
     if (!System.getenv().containsKey("CI")) {
         ratchetFrom("origin/main")
     }
+
     format("javascript", {
         indentWithSpaces(2)
         licenseHeader(licenseHeader, "(import|const|//)")
         prettier()
-            .npmExecutable("${(tasks.named("npmSetup").get() as NpmSetupTask).npmDir.get().asFile.toPath().resolve(npmExec)}")
+            .npmExecutable(npmSetup.npmDir.get().asFile.toPath().resolve(npmExec))
             .config(
                 mapOf(
                     "bracketSpacing" to false,
@@ -94,23 +93,23 @@ spotless {
         target("**/*.js")
         targetExclude("node_modules/**", ".node-flywaydb/**")
     })
+    isEnforceCheck = false
     java {
         addStep(StripOldLicenseFormatterStep.create())
-        googleJavaFormat().aosp().reflowLongStrings()
+        palantirJavaFormat()
         licenseHeader(licenseHeader, "package")
         target("**/*.java")
         targetExclude("build/**")
         toggleOffOn()
     }
     kotlinGradle({
-        ktfmt().dropboxStyle()
+        ktfmt()
         licenseHeader(licenseHeader, "(description|import|plugins)")
     })
     format("miscellaneous", {
         endWithNewline()
         indentWithSpaces(2)
-        prettier()
-            .npmExecutable("${(tasks.named("npmSetup").get() as NpmSetupTask).npmDir.get().asFile.toPath().resolve(npmExec)}")
+        prettier().npmExecutable(npmSetup.npmDir.get().asFile.toPath().resolve(npmExec))
         target("**/*.json", "**/*.md", "**/*.yml", "**/*.yaml")
         trimTrailingWhitespace()
     })
