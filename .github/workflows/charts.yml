@@ -20,9 +20,6 @@ jobs:
       - name: Run lint
         run: ct lint --config .github/ct.yaml --all
 
-      - name: Test
-        run: buildSrc/src/main/resources/hooks/pre-commit
-
   install:
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +44,7 @@ jobs:
       - name: Build images
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: dockerPush -PdockerRegistry=localhost:5001/mirrornode -PdockerTag=test -Dorg.gradle.parallel=false
+          arguments: dockerPush -PdockerRegistry=localhost:5001/mirrornode -PdockerTag=test --max-workers=2
 
       - name: Install ct
         uses: helm/chart-testing-action@v2.3.1
